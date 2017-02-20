@@ -1,0 +1,43 @@
+{
+  "name": "node-oauth2-sns",
+  "version": "0.1.0",
+  "description": "Parse-server module for implementing an OAuth2 SNS Login with Express in Node.js",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "babel src --presets babel-preset-es2015 --out-dir lib",
+    "prepublish": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gimdongwoo/node-oauth2-sns.git"
+  },
+  "keywords": [
+    "oauth2",
+    "nodejs",
+    "express",
+    "facebook",
+    "instagram",
+    "social-login",
+    "sns",
+    "naver",
+    "daum"
+  ],
+  "author": "Dongwoo Gim <gimdongwoo@gmail.com> (https://github.com/gimdongwoo)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/gimdongwoo/node-oauth2-sns/issues"
+  },
+  "homepage": "https://github.com/gimdongwoo/node-oauth2-sns#readme",
+  "devDependencies": {
+    "babel-cli": "^6.22.2",
+    "babel-preset-es2015": "^6.22.0",
+    "express": "^4.14.1",
+    "express-session": "^1.15.1",
+    "path": "^0.12.7"
+  },
+  "dependencies": {
+    "oauth": "^0.9.15",
+    "parse-rest-nodejs": "^0.1.3"
+  }
+}
