@@ -7,8 +7,8 @@ import { OAuth2 } from 'oauth';
 import path from 'path';
 import ParseRest from 'parse-rest-nodejs';
 
-// keep user info to session
-export function userToSession(req, _user) {
+// keep user info to session = default
+function defaultUserHandler(req, _user) {
   // error
   if (!_user) return {};
 
@@ -49,8 +49,8 @@ export default class SocialOAuth2 {
    * @param {Object?} api - Express router
    * @return {Object} express router
    */
-  static create(_path, api = Router()) {
-    const router = new SocialOAuth2(_path);
+  static create(options, api = Router()) {
+    const router = new SocialOAuth2(options);
 
     // facebook
     api.get('/facebook/auth', (req, res) => router.facebookAuth(req, res));
@@ -66,7 +66,10 @@ export default class SocialOAuth2 {
     return api;
   }
 
-  constructor(_path) {
+  constructor(options) {
+    const _path = options.path;
+    const _userHandler = options.userHandler;
+
     // facebook
     this.fbOAuth2 = fbOAuth2();
     this.fbRedirectUri = path.join(_path, '/facebook/callback');
@@ -74,6 +77,9 @@ export default class SocialOAuth2 {
     // instagram
     this.instaOAuth2 = instaOAuth2();
     this.instaRedirectUri = path.join(_path, '/instagram/callback');
+
+    // userHandler
+    this.userHandler = _userHandler;
   }
 
   //
@@ -129,6 +135,8 @@ export default class SocialOAuth2 {
       return res.status(500).json(err).end();
     }
 
+    const userHandler = this.userHandler || defaultUserHandler;
+
     // https://developers.facebook.com/docs/graph-api/reference/v2.2/user
     this.fbOAuth2.get('https://graph.facebook.com/me?fields=id,name,email', accessToken, (err, data/* , response */) => {
       if (err) {
@@ -167,7 +175,7 @@ export default class SocialOAuth2 {
                 const _session = sessions[0];
                 req.session.sessionToken = _session.sessionToken;
                 // end
-                return res.json(userToSession(req, { ...user, ..._param }));
+                return res.json(userHandler(req, { ...user, ..._param }));
               }
               return errorFn({ code: 101, error: 'sessions not exist' });
             }, errorFn);
@@ -190,7 +198,7 @@ export default class SocialOAuth2 {
             // reload
             parseRest.get('/users/me').then((_user) => {
               // end
-              return res.json(userToSession(req, _user));
+              return res.json(userHandler(req, _user));
             }, errorFn);
           }, errorFn);
         }
@@ -253,6 +261,8 @@ export default class SocialOAuth2 {
       return res.status(500).json(err).end();
     }
 
+    const userHandler = this.userHandler || defaultUserHandler;
+
     this.instaOAuth2.get('https://api.instagram.com/v1/users/self/', accessToken, (err, data/* , response */) => {
       if (err) {
         console.error(err);
@@ -285,7 +295,7 @@ export default class SocialOAuth2 {
                   const _session = sessions[0];
                   req.session.sessionToken = _session.sessionToken;
                   // end
-                  return res.json(userToSession(req, user));
+                  return res.json(userHandler(req, user));
                 }
                 return errorFn({ code: 101, error: 'sessions not exist' });
               }, errorFn);

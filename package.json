@@ -1,5 +1,5 @@
 {
-  "name": "node-oauth2-sns",
+  "name": "parse-oauth2-sns",
   "version": "0.1.0",
   "description": "Parse-server module for implementing an OAuth2 SNS Login with Express in Node.js",
   "main": "lib/index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gimdongwoo/node-oauth2-sns.git"
+    "url": "git+https://github.com/gimdongwoo/parse-oauth2-sns.git"
   },
   "keywords": [
     "oauth2",
@@ -26,9 +26,9 @@
   "author": "Dongwoo Gim <gimdongwoo@gmail.com> (https://github.com/gimdongwoo)",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/gimdongwoo/node-oauth2-sns/issues"
+    "url": "https://github.com/gimdongwoo/parse-oauth2-sns/issues"
   },
-  "homepage": "https://github.com/gimdongwoo/node-oauth2-sns#readme",
+  "homepage": "https://github.com/gimdongwoo/parse-oauth2-sns#readme",
   "devDependencies": {
     "babel-cli": "^6.22.2",
     "babel-preset-es2015": "^6.22.0",
