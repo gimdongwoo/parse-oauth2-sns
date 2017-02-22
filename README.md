@@ -17,17 +17,54 @@ npm install --save parse-oauth2-sns
 How to Use
 ----------
 
+### For Application
+
+1. Use internal browser (like Android Webview)
+
+2. Open auth url : /facebook/auth
+
+  ```javascript
+  http://__your_host__/oauth2/facebook/auth
+  ```
+
+3. Check url changed to /callback
+
+4. Then url chenged to /callback, get authdata from body.
+
+  ```javascript
+  // URL : facebook/callback
+  {"access_token":"...","expiration_date":"..."}
+  ```
+
+### For Web
+
+1. Open auth url with URL in callback parameter : /facebook/auth?callback=URL
+
+  ```javascript
+  http://__your_host__/oauth2/facebook/auth?callback=/loginCallback/facebook
+  ```
+
+2. Then URL is called, get authdata from querystring.
+
+  ```javascript
+  http://__host__/loginCallback/facebook?access_token=...& expiration_date=...
+  ```
+
+
+Routes
+------
+
 ### Facebook Routes
 
 * /facebook/auth
 
-  * request [get]
+  * request [get] : callback (url, option)
 
   * response : redirect to Facebook OAuth page
 
 * /facebook/callback
 
-  * request [get]
+  * request : from facebook OAuth page
 
   * response : json
 
@@ -40,31 +77,31 @@ How to Use
   * request [post] : json (facebook auth info)
 
   ```javascript
- {"access_token":"...","expiration_date":"..."}
+  {"access_token":"...","expiration_date":"..."}
   ```
 
   * response : parse-serve user object (username equal to facebook email)
 
   ```javascript
- {"objectId": "ziJdB2jBul", "username": "__facebook.email__", authData, ...}
+  {"objectId": "ziJdB2jBul", "username": "__facebook.email__", authData, ...}
   ```
 
 ### Instagram Routes
 
 * /instagram/auth
 
-  * request [get]
+  * request [get] : callback (url, option)
 
   * response : redirect to Instagram OAuth page
 
 * /instagram/callback
 
-  * request [get]
+  * request : from instagram OAuth page
 
   * response : json
 
   ```javascript
- {"access_token":"...","user":"..."}
+  {"access_token":"...","user":"..."}
   ```
   
 * /instagram/login
@@ -72,13 +109,13 @@ How to Use
   * request [post] : json (instagram auth info)
 
   ```javascript
- {"access_token":"..."}
+  {"access_token":"..."}
   ```
 
   * response : parse-server user object (username equal to instagram username)
 
   ```javascript
- {"objectId": "ziJdB2jBul", "username": "__instagram.username__", authData, ...}
+  {"objectId": "ziJdB2jBul", "username": "__instagram.username__", authData, ...}
   ```
 
 * /instagram/link : parse-server user link to instagram user.
@@ -109,18 +146,18 @@ How to Use
 
 * /naver/auth
 
-  * request [get]
+  * request [get] : callback (url, option)
 
   * response : redirect to naver OAuth page
 
 * /naver/callback
 
-  * request [get]
+  * request : from naver OAuth page
 
   * response : json
 
   ```javascript
- {"access_token":"...","expiration_date":"..."}
+  {"access_token":"...","expiration_date":"..."}
   ```
 
 * /naver/login
@@ -128,31 +165,31 @@ How to Use
   * request [post] : json (naver auth info)
 
   ```javascript
- {"access_token":"...","expiration_date":"..."}
+  {"access_token":"...","expiration_date":"..."}
   ```
 
   * response : parse-serve user object (username equal to naver email)
 
   ```javascript
- {"objectId": "ziJdB2jBul", "username": "__naver.email__", authData, ...}
+  {"objectId": "ziJdB2jBul", "username": "__naver.email__", authData, ...}
   ```
 
 ### Daum Routes
 
 * /daum/auth
 
-  * request [get]
+  * request [get] : callback (url, option)
 
   * response : redirect to daum OAuth page
 
 * /daum/callback
 
-  * request [get]
+  * request : from daum OAuth page
 
   * response : json
 
   ```javascript
- {"access_token":"...","expiration_date":"..."}
+  {"access_token":"...","expiration_date":"..."}
   ```
   
 * /daum/login
@@ -160,13 +197,13 @@ How to Use
   * request [post] : json (daum auth info)
 
   ```javascript
- {"access_token":"...","expiration_date":"..."}
+  {"access_token":"...","expiration_date":"..."}
   ```
 
   * response : parse-server user object (username equal to daum userid, not email provided)
 
   ```javascript
- {"objectId": "ziJdB2jBul", "username": "__daum.userid__", authData, ...}
+  {"objectId": "ziJdB2jBul", "username": "__daum.userid__", authData, ...}
   ```
 
 Initialize
@@ -176,50 +213,50 @@ Initialize
 
 * It's work with [parse-rest-nodejs](https://github.com/gimdongwoo/parse-oauth2-sns).
 
-```javascript
-// Recommend to use 'better-npm-run'.
-process.env.SERVER_URL = "http://__host__:__port__/parse"
-process.env.APP_ID = "__app_id__";
-process.env.MASTER_KEY = "__master_key__";
-process.env.FB_APPIDS = ["__fb_key__"];
-process.env.FB_SECRETS = ["__fb_secret__"];
-process.env.INSTA_APPIDS = ["__insta_key__"];
-process.env.INSTA_SECRETS = ["__insta_secret__"];
-```
+  ```javascript
+  // Recommend to use 'better-npm-run'.
+  process.env.SERVER_URL = "http://__host__:__port__/parse"
+  process.env.APP_ID = "__app_id__";
+  process.env.MASTER_KEY = "__master_key__";
+  process.env.FB_APPIDS = ["__fb_key__"];
+  process.env.FB_SECRETS = ["__fb_secret__"];
+  process.env.INSTA_APPIDS = ["__insta_key__"];
+  process.env.INSTA_SECRETS = ["__insta_secret__"];
+  ```
 
 ### Router using Express
 
 * load module
 
-```javascript
-// es6
-import SocialOAuth2 from 'parse-oauth2-sns';
-import bodyParser from 'body-parser';
-```
+  ```javascript
+  // es6
+  import SocialOAuth2 from 'parse-oauth2-sns';
+  import bodyParser from 'body-parser';
+  ```
 
-```javascript
-// es5
-var SocialOAuth2 = require('parse-oauth2-sns').default;
-var bodyParser = require('body-parser');
-```
+  ```javascript
+  // es5
+  var SocialOAuth2 = require('parse-oauth2-sns').default;
+  var bodyParser = require('body-parser');
+  ```
 
 * create object
 
-```javascript
-// for use req.body
-app.use(bodyParser.json());
+  ```javascript
+  // for use req.body
+  app.use(bodyParser.json());
+  
+  // OAuth2
+  app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2' }));
+  ```
 
-// OAuth2
-app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2' }));
-```
-
-```javascript
-// for use req.body
-app.use(bodyParser.json());
-
-// OR OAuth2 + userObject Handler
-app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
-```
+  ```javascript
+  // for use req.body
+  app.use(bodyParser.json());
+  
+  // OR OAuth2 + userObject Handler
+  app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
+  ```
 
 Addon Features
 --------------
