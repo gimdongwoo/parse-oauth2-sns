@@ -24,9 +24,21 @@ function defaultUserHandler(req, _user) {
   return _user;
 }
 
+function keyConverter(_envKey) {
+  let returnKey = _envKey;
+
+  if (typeof _envKey === 'object' && Array.isArray(_envKey)) {
+    returnKey = _envKey[0];
+  } else if (typeof _envKey === 'string' && _envKey.indexOf('[') > -1) {
+    returnKey = (JSON.parse(_envKey))[0];
+  }
+
+  return returnKey;
+}
+
 function fbOAuth2() {
-  const appId = typeof process.env.FB_APPIDS === 'object' ? process.env.FB_APPIDS[0] : process.env.FB_APPIDS;
-  const secret = typeof process.env.FB_SECRETS === 'object' ? process.env.FB_SECRETS[0] : process.env.FB_SECRETS;
+  const appId = keyConverter(process.env.FB_APPIDS);
+  const secret = keyConverter(process.env.FB_SECRETS);
   return new OAuth2(appId,
     secret,
     '',
@@ -37,13 +49,37 @@ function fbOAuth2() {
 }
 
 function instaOAuth2() {
-  const appId = typeof process.env.INSTA_APPIDS === 'object' ? process.env.INSTA_APPIDS[0] : process.env.INSTA_APPIDS;
-  const secret = typeof process.env.INSTA_SECRETS === 'object' ? process.env.INSTA_SECRETS[0] : process.env.INSTA_SECRETS;
+  const appId = keyConverter(process.env.INSTA_APPIDS);
+  const secret = keyConverter(process.env.INSTA_SECRETS);
   return new OAuth2(appId,
     secret,
     '',
     'https://api.instagram.com/oauth/authorize/',
     'https://api.instagram.com/oauth/access_token',
+    null
+  );
+}
+
+function naverOAuth2() {
+  const appId = keyConverter(process.env.NAVER_APPIDS);
+  const secret = keyConverter(process.env.NAVER_SECRETS);
+  return new OAuth2(appId,
+    secret,
+    '',
+    'https://nid.naver.com/oauth2.0/authorize',
+    'https://nid.naver.com/oauth2.0/token',
+    null
+  );
+}
+
+function daumOAuth2() {
+  const appId = keyConverter(process.env.DAUM_APPIDS);
+  const secret = keyConverter(process.env.DAUM_SECRETS);
+  return new OAuth2(appId,
+    secret,
+    '',
+    'https://apis.daum.net/oauth2/authorize',
+    'https://apis.daum.net/oauth2/token',
     null
   );
 }
@@ -64,8 +100,19 @@ export default class SocialOAuth2 {
     // instagram
     api.get('/instagram/auth', (req, res) => router.instagramAuth(req, res));
     api.get('/instagram/callback', (req, res) => router.instagramCallback(req, res));
+    api.post('/instagram/login', (req, res) => router.instagramLogin(req, res));
     api.post('/instagram/link', (req, res) => router.instagramLink(req, res));
     api.get('/instagram/recent', (req, res) => router.instagramRecent(req, res));
+
+    // naver
+    api.get('/naver/auth', (req, res) => router.naverAuth(req, res));
+    api.get('/naver/callback', (req, res) => router.naverCallback(req, res));
+    api.post('/naver/login', (req, res) => router.naverLogin(req, res));
+
+    // daum
+    api.get('/daum/auth', (req, res) => router.daumAuth(req, res));
+    api.get('/daum/callback', (req, res) => router.daumCallback(req, res));
+    api.post('/daum/login', (req, res) => router.daumLogin(req, res));
 
     return api;
   }
@@ -81,6 +128,14 @@ export default class SocialOAuth2 {
     // instagram
     this.instaOAuth2 = instaOAuth2();
     this.instaRedirectUri = path.join(_path, '/instagram/callback');
+
+    // naver
+    this.naverOAuth2 = naverOAuth2();
+    this.naverRedirectUri = path.join(_path, '/naver/callback');
+
+    // daum
+    this.daumOAuth2 = daumOAuth2();
+    this.daumRedirectUri = path.join(_path, '/daum/callback');
 
     // userHandler
     this.userHandler = _userHandler;
@@ -172,16 +227,14 @@ export default class SocialOAuth2 {
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
           // authData save
           const _newAuthData = { ...user.authData, ..._authData };
-          // login count
-          const loginCount = (user.loginCount || 0) + 1;
           // save param
-          const _param = { authData: _newAuthData, loginCount };
+          const _param = { authData: _newAuthData };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
               if (sessions && sessions[0]) {
                 const _session = sessions[0];
-                req.session.sessionToken = _session.sessionToken;
+                if (typeof req.session === 'object') req.session.sessionToken = _session.sessionToken;
                 // end
                 return res.json(userHandler(req, { ...user, ..._param }));
               }
@@ -192,17 +245,16 @@ export default class SocialOAuth2 {
           // New
           const user = {
             username: profile.email,
-            password: profile.id,
+            password: (typeof profile.id === 'number' ? profile.id.toString() : profile.id),
             name: profile.name,
             email: profile.email,
             socialType: 'facebook',
             socialProfile: profile,
             profileImage: { url: profileImageUrl },
-            authData: _authData,
-            loginCount: 1
+            authData: _authData
           };
           parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
-            req.session.sessionToken = result.sessionToken;
+            if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
             // reload
             parseRest.get('/users/me').then((_user) => {
               // end
@@ -248,6 +300,92 @@ export default class SocialOAuth2 {
         return res.json(instagramAuth);
       });
     }
+  }
+
+  /**
+   * @param {String} accessToken
+   * @return {Object} parse user
+   */
+  instagramLogin(req, res) {
+    const { body = {}, session = {} } = req;
+    console.log('body', body);
+    console.log('session', session);
+    const accessToken = body.access_token || session.access_token;
+    if (!accessToken) return res.status(500).json({ code: 101, error: 'Invalid instagram access_token' }).end();
+
+    function errorFn(err) {
+      console.error(err);
+      return res.status(500).json(err).end();
+    }
+
+    const userHandler = (_req, _user) => {
+      let user = defaultUserHandler(_req, _user);
+      if (this.userHandler) user = this.userHandler(_req, user);
+      return user;
+    };
+
+    // https://www.instagram.com/developer/endpoints/users/
+    this.instaOAuth2.get('https://api.instagram.com/v1/users/self/', accessToken, (err, data/* , response */) => {
+      if (err) {
+        return errorFn(err);
+      }
+
+      const profile = JSON.parse(data).data;
+      console.log(profile);
+
+      const _authData = {
+        instagram: {
+          id: profile.id,
+          access_token: accessToken
+        }
+      };
+
+      const parseRest = new ParseRest(req);
+      parseRest.get('/users', { where: { username: profile.username } }, { useMasterKey: true }).then((users) => {
+        if (users && users[0]) {
+          // Retrieving
+          const user = users[0];
+          // ban user
+          if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
+          // authData save
+          const _newAuthData = { ...user.authData, ..._authData };
+          // save param
+          const _param = { authData: _newAuthData };
+          parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
+            // session query
+            parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
+              if (sessions && sessions[0]) {
+                const _session = sessions[0];
+                if (typeof req.session === 'object') req.session.sessionToken = _session.sessionToken;
+                // end
+                return res.json(userHandler(req, { ...user, ..._param }));
+              }
+              return errorFn({ code: 101, error: 'sessions not exist' });
+            }, errorFn);
+          }, errorFn);
+        } else {
+          // New
+          const user = {
+            username: profile.username,
+            password: (typeof profile.id === 'number' ? profile.id.toString() : profile.id),
+            name: profile.full_name,
+            // email: profile.email,
+            socialType: 'instagram',
+            socialProfile: profile,
+            profileImage: { url: profile.profile_picture },
+            authData: _authData
+          };
+          parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
+            if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
+            // reload
+            parseRest.get('/users/me').then((_user) => {
+              // end
+              return res.json(userHandler(req, _user));
+            }, errorFn);
+          }, errorFn);
+        }
+      }, errorFn);
+    });
   }
 
   /**
@@ -305,7 +443,7 @@ export default class SocialOAuth2 {
               parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
                 if (sessions && sessions[0]) {
                   const _session = sessions[0];
-                  req.session.sessionToken = _session.sessionToken;
+                  if (typeof req.session === 'object') req.session.sessionToken = _session.sessionToken;
                   // end
                   return res.json(userHandler(req, user));
                 }
@@ -356,6 +494,254 @@ export default class SocialOAuth2 {
         });
       }
       return errorFn('user not exist');
+    });
+  }
+
+  //
+  // naver
+  //
+  naverAuth(req, res) {
+    // For eg. "http://localhost:3000/naver/callback"
+    const redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.get('host'), this.naverRedirectUri);
+    const params = { redirect_uri: redirectUri, response_type: 'code'  };
+    console.log('params', params);
+    return res.redirect(this.naverOAuth2.getAuthorizeUrl(params));
+  }
+
+  naverCallback(req, res) {
+    if (req.error_reason) {
+      res.send(req.error_reason);
+    }
+    if (req.query && req.query.code) {
+      const redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.get('host'), this.naverRedirectUri);
+      // For eg. "/naver/callback"
+      this.naverOAuth2.getOAuthAccessToken(req.query.code, {
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri
+      }, (err, accessToken, refreshToken, params) => {
+        if (err) {
+          console.error(err);
+          return res.send(err);
+        }
+
+        const naverAuth = {
+          access_token: accessToken,
+          expiration_date: params.expires_in
+        };
+        return res.json(naverAuth);
+      });
+    }
+  }
+
+  /**
+   * @param {String} accessToken
+   * @return {Object} parse user
+   */
+  naverLogin(req, res) {
+    const { body = {}, session = {} } = req;
+    console.log('body', body);
+    console.log('session', session);
+    const accessToken = body.access_token || session.access_token;
+    const expires = body.expiration_date || session.expiration_date;
+    if (!accessToken) return res.status(500).json({ code: 101, error: 'Invalid naver access_token' }).end();
+
+    function errorFn(err) {
+      console.error(err);
+      return res.status(500).json(err).end();
+    }
+
+    const userHandler = (_req, _user) => {
+      let user = defaultUserHandler(_req, _user);
+      if (this.userHandler) user = this.userHandler(_req, user);
+      return user;
+    };
+
+    // https://developers.naver.com/docs/login/profile/
+    this.naverOAuth2.get('https://openapi.naver.com/v1/nid/me', accessToken, (err, data/* , response */) => {
+      if (err) {
+        return errorFn(err);
+      }
+
+      const profile = (JSON.parse(data)).response;
+      console.log(profile);
+
+      const _authData = {
+        naver: {
+          id: profile.id,
+          access_token: accessToken,
+          expiration_date: expires
+        }
+      };
+
+      const parseRest = new ParseRest(req);
+      parseRest.get('/users', { where: { username: profile.email } }, { useMasterKey: true }).then((users) => {
+        if (users && users[0]) {
+          // Retrieving
+          const user = users[0];
+          // ban user
+          if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
+          // authData save
+          const _newAuthData = { ...user.authDataEtc, ..._authData };
+          // save param
+          const _param = { authDataEtc: _newAuthData };
+          parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
+            // session query
+            parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
+              if (sessions && sessions[0]) {
+                const _session = sessions[0];
+                if (typeof req.session === 'object') req.session.sessionToken = _session.sessionToken;
+                // end
+                return res.json(userHandler(req, { ...user, ..._param }));
+              }
+              return errorFn({ code: 101, error: 'sessions not exist' });
+            }, errorFn);
+          }, errorFn);
+        } else {
+          // New
+          const user = {
+            username: profile.email,
+            password: (typeof profile.id === 'number' ? profile.id.toString() : profile.id),
+            name: profile.name,
+            email: profile.email,
+            socialType: 'naver',
+            socialProfile: profile,
+            profileImage: { url: profile.profile_image },
+            authDataEtc: _authData
+          };
+          parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
+            if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
+            // reload
+            parseRest.get('/users/me').then((_user) => {
+              // end
+              return res.json(userHandler(req, _user));
+            }, errorFn);
+          }, errorFn);
+        }
+      }, errorFn);
+    });
+  }
+
+  //
+  // daum
+  //
+  daumAuth(req, res) {
+    // For eg. "http://localhost:3000/daum/callback"
+    const redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.get('host'), this.daumRedirectUri);
+    const params = { redirect_uri: redirectUri, response_type: 'code'  };
+    console.log('params', params);
+    return res.redirect(this.daumOAuth2.getAuthorizeUrl(params));
+  }
+
+  daumCallback(req, res) {
+    if (req.error_reason) {
+      res.send(req.error_reason);
+    }
+    if (req.query && req.query.code) {
+      const redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.get('host'), this.daumRedirectUri);
+      // For eg. "/daum/callback"
+      this.daumOAuth2.getOAuthAccessToken(req.query.code, {
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri
+      }, (err, accessToken, refreshToken, params) => {
+        if (err) {
+          console.error(err);
+          return res.send(err);
+        }
+
+        const daumAuth = {
+          access_token: accessToken,
+          expiration_date: params.expires_in
+        };
+        return res.json(daumAuth);
+      });
+    }
+  }
+
+  /**
+   * @param {String} accessToken
+   * @return {Object} parse user
+   */
+  daumLogin(req, res) {
+    const { body = {}, session = {} } = req;
+    console.log('body', body);
+    console.log('session', session);
+    const accessToken = body.access_token || session.access_token;
+    const expires = body.expiration_date || session.expiration_date;
+    if (!accessToken) return res.status(500).json({ code: 101, error: 'Invalid daum access_token' }).end();
+
+    function errorFn(err) {
+      console.error(err);
+      return res.status(500).json(err).end();
+    }
+
+    const userHandler = (_req, _user) => {
+      let user = defaultUserHandler(_req, _user);
+      if (this.userHandler) user = this.userHandler(_req, user);
+      return user;
+    };
+
+    // https://developers.daum.net/services/apis/user/v1/show.format
+    this.daumOAuth2.get('https://apis.daum.net/user/v1/show.json', accessToken, (err, data/* , response */) => {
+      if (err) {
+        return errorFn(err);
+      }
+
+      const profile = (JSON.parse(data)).result;
+      console.log(profile);
+
+      const _authData = {
+        daum: {
+          id: profile.id,
+          access_token: accessToken,
+          expiration_date: expires
+        }
+      };
+
+      const parseRest = new ParseRest(req);
+      parseRest.get('/users', { where: { username: profile.userid } }, { useMasterKey: true }).then((users) => {
+        if (users && users[0]) {
+          // Retrieving
+          const user = users[0];
+          // ban user
+          if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
+          // authData save
+          const _newAuthData = { ...user.authDataEtc, ..._authData };
+          // save param
+          const _param = { authDataEtc: _newAuthData };
+          parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
+            // session query
+            parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
+              if (sessions && sessions[0]) {
+                const _session = sessions[0];
+                if (typeof req.session === 'object') req.session.sessionToken = _session.sessionToken;
+                // end
+                return res.json(userHandler(req, { ...user, ..._param }));
+              }
+              return errorFn({ code: 101, error: 'sessions not exist' });
+            }, errorFn);
+          }, errorFn);
+        } else {
+          // New
+          const user = {
+            username: profile.userid,
+            password: (typeof profile.id === 'number' ? profile.id.toString() : profile.id),
+            name: profile.nickname,
+            // email: profile.email,
+            socialType: 'daum',
+            socialProfile: profile,
+            profileImage: { url: profile.imagePath },
+            authDataEtc: _authData
+          };
+          parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
+            if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
+            // reload
+            parseRest.get('/users/me').then((_user) => {
+              // end
+              return res.json(userHandler(req, _user));
+            }, errorFn);
+          }, errorFn);
+        }
+      }, errorFn);
     });
   }
 }

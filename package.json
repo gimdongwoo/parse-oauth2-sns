@@ -1,6 +1,6 @@
 {
   "name": "parse-oauth2-sns",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Parse-server module for implementing an OAuth2 SNS Login with Express in Node.js",
   "main": "lib/index.js",
   "scripts": {
@@ -41,6 +41,7 @@
     "path": "^0.12.7"
   },
   "dependencies": {
+    "body-parser": "^1.16.1",
     "oauth": "^0.9.15",
     "parse-rest-nodejs": "^0.1.3"
   }

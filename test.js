@@ -1,5 +1,6 @@
 var express = require('express');
 var session = require('express-session');
+var bodyParser = require('body-parser');
 var http = require('http');
 var ParseServer = require('parse-server').ParseServer;
 
@@ -14,6 +15,10 @@ process.env.FB_APPIDS = ["1360181184056097"];
 process.env.FB_SECRETS = ["cc50007848c429374e89bd2c5202e404"];
 process.env.INSTA_APPIDS = ["6b5bf7aef2eb4296961fe43af1858a3c"];
 process.env.INSTA_SECRETS = ["dbbc1c52f4da47c6a86f2f081e82598c"];
+process.env.NAVER_APPIDS = ["Uyjq1a8Vz0nngCdlMZZw"];
+process.env.NAVER_SECRETS = ["_Xigkgo0SD"];
+process.env.DAUM_APPIDS = ["6600734411403537733"];
+process.env.DAUM_SECRETS = ["d5bfe986d88f43932736deb6a4aa1e09"];
 
 // app
 var app = express();
@@ -42,6 +47,7 @@ app.use(session({
   saveUninitialized: false,
   // cookie: { maxAge: 60000 }
 }));
+app.use(bodyParser.json());
 
 // OAuth2
 app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2' }));
