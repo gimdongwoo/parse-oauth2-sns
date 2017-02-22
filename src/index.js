@@ -13,11 +13,15 @@ function defaultUserHandler(req, _user) {
   if (!_user) return {};
 
   // login results
-  if (_user.sessionToken) req.session.sessionToken = _user.sessionToken;
+  if (typeof req.session === 'object') {
+    if (_user.sessionToken) req.session.sessionToken = _user.sessionToken;
 
-  req.session.user = _user;
-  req.session.user.sessionToken = req.session.sessionToken;
-  return req.session.user;
+    req.session.user = _user;
+    req.session.user.sessionToken = req.session.sessionToken;
+
+    return req.session.user;
+  }
+  return _user;
 }
 
 function fbOAuth2() {
@@ -135,7 +139,11 @@ export default class SocialOAuth2 {
       return res.status(500).json(err).end();
     }
 
-    const userHandler = this.userHandler || defaultUserHandler;
+    const userHandler = (_req, _user) => {
+      let user = defaultUserHandler(_req, _user);
+      if (this.userHandler) user = this.userHandler(_req, user);
+      return user;
+    };
 
     // https://developers.facebook.com/docs/graph-api/reference/v2.2/user
     this.fbOAuth2.get('https://graph.facebook.com/me?fields=id,name,email', accessToken, (err, data/* , response */) => {
@@ -261,7 +269,11 @@ export default class SocialOAuth2 {
       return res.status(500).json(err).end();
     }
 
-    const userHandler = this.userHandler || defaultUserHandler;
+    const userHandler = (_req, _user) => {
+      let user = defaultUserHandler(_req, _user);
+      if (this.userHandler) user = this.userHandler(_req, user);
+      return user;
+    };
 
     this.instaOAuth2.get('https://api.instagram.com/v1/users/self/', accessToken, (err, data/* , response */) => {
       if (err) {

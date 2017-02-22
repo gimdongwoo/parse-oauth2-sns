@@ -44,7 +44,7 @@ How to Use
   ```javascript
  {"objectId": "ziJdB2jBul", "username": "__facebook.email__", authData, ...}
   ```
-  
+
 ### Instagram Routes
 
 * /instagram/auth
@@ -66,11 +66,11 @@ How to Use
 * /instagram/link : parse user link to instagram user.
 
   * request [post] : instagram token and parse user info.
-  
+
   ```javascript
   {"access_token":"", "username": "__parse user.username__"}
   ```
-  
+
   * response : parse user object linked instagram
 
   ```javascript  
@@ -107,5 +107,8 @@ process.env.MASTER_KEY = "__master_key__";
 import SocialOAuth2 from 'parse-oauth2-sns';
 
 // OAuth2
-app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: userToSession }));
+app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2' }));
+
+// OR OAuth2 + userObject Handler
+app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
 ```
