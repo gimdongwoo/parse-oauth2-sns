@@ -96,19 +96,37 @@ Initialize
 
 ```javascript
 // Recommend to use 'better-npm-run'.
-process.env.SERVER_URL = "http://__host__/parse"
+process.env.SERVER_URL = "http://__host__:__port__/parse"
 process.env.APP_ID = "__app_id__";
 process.env.MASTER_KEY = "__master_key__";
+process.env.FB_APPIDS = ["__fb_key__"];
+process.env.FB_SECRETS = ["__fb_secret__"];
+process.env.INSTA_APPIDS = ["__insta_key__"];
+process.env.INSTA_SECRETS = ["__insta_secret__"];
 ```
 
 ### Router using Express
 
-```javascript
-import SocialOAuth2 from 'parse-oauth2-sns';
+* load module
 
+```javascript
+// es6
+import SocialOAuth2 from 'parse-oauth2-sns';
+```
+
+```javascript
+// es5
+var SocialOAuth2 = require('parse-oauth2-sns').default;
+```
+
+* create object
+
+```javascript
 // OAuth2
 app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2' }));
+```
 
+```javascript
 // OR OAuth2 + userObject Handler
 app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
 ```

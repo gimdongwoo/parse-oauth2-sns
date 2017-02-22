@@ -1,12 +1,13 @@
 {
   "name": "parse-oauth2-sns",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Parse-server module for implementing an OAuth2 SNS Login with Express in Node.js",
   "main": "lib/index.js",
   "scripts": {
     "build": "babel src --presets=babel-preset-es2015,babel-preset-stage-0 --out-dir lib",
     "prepublish": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "mongodb-runner start && node test.js",
+    "test": "npm run build && npm run dev"
   },
   "repository": {
     "type": "git",
@@ -35,6 +36,8 @@
     "babel-preset-stage-0": "^6.22.0",
     "express": "^4.14.1",
     "express-session": "^1.15.1",
+    "mongodb-runner": "^3.4.0",
+    "parse-server": "^2.3.5",
     "path": "^0.12.7"
   },
   "dependencies": {
