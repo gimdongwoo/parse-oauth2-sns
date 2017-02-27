@@ -185,7 +185,8 @@ export default class SocialOAuth2 {
         };
         // when custom callback
         if (req.query && req.query.callback) {
-          return res.redirect(req.query.callback + '?' + qsStringify(facebookAuth));
+          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
+          return res.redirect(req.query.callback + joint + qsStringify(facebookAuth));
         }
         return res.json(facebookAuth);
       });
@@ -316,7 +317,8 @@ export default class SocialOAuth2 {
         };
         // when custom callback
         if (req.query && req.query.callback) {
-          return res.redirect(req.query.callback + '?' + qsStringify(instagramAuth));
+          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
+          return res.redirect(req.query.callback + joint + qsStringify(instagramAuth));
         }
         return res.json(instagramAuth);
       });
@@ -553,7 +555,8 @@ export default class SocialOAuth2 {
         };
         // when custom callback
         if (req.query && req.query.callback) {
-          return res.redirect(req.query.callback + '?' + qsStringify(naverAuth));
+          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
+          return res.redirect(req.query.callback + joint + qsStringify(naverAuth));
         }
         return res.json(naverAuth);
       });
@@ -683,7 +686,8 @@ export default class SocialOAuth2 {
         };
         // when custom callback
         if (req.query && req.query.callback) {
-          return res.redirect(req.query.callback + '?' + qsStringify(daumAuth));
+          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
+          return res.redirect(req.query.callback + joint + qsStringify(daumAuth));
         }
         return res.json(daumAuth);
       });
