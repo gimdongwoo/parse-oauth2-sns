@@ -27,9 +27,9 @@ How to Use
   http://__your_host__/oauth2/facebook/auth
   ```
 
-3. Check url changed to /callback
+3. Check url changed to '/callback'
 
-4. Then url chenged to /callback, get authdata from body.
+4. Then url chenged to '/callback', get authdata from body.
 
   ```javascript
   // URL : facebook/callback
@@ -41,8 +41,12 @@ How to Use
 1. Open auth url with URL in callback parameter : /facebook/auth?callback=URL
 
   ```javascript
-  http://__your_host__/oauth2/facebook/auth?callback=/loginCallback/facebook
+  window.location.href = 'http://__your_host__/oauth2/facebook/auth?callback=' + encodeURIComponent('/login/callback?type=facebook')
   ```
+  | Params | Type | Description |
+  |--------|------|:------------|
+  | callback | string | callback url. Redirected after authentication
+  | host | string | If using proxy, can change api url host. ex) host=__your_host__/api
 
 2. Then URL is called, get authdata from querystring.
 
@@ -58,7 +62,7 @@ Routes
 
 * /facebook/auth
 
-  * request [get] : callback (url, option)
+  * request [get] : callback (url, option), host (url, option)
 
   * response : redirect to Facebook OAuth page
 
@@ -90,7 +94,7 @@ Routes
 
 * /instagram/auth
 
-  * request [get] : callback (url, option)
+  * request [get] : callback (url, option), host (url, option)
 
   * response : redirect to Instagram OAuth page
 
@@ -146,7 +150,7 @@ Routes
 
 * /naver/auth
 
-  * request [get] : callback (url, option)
+  * request [get] : callback (url, option), host (url, option)
 
   * response : redirect to naver OAuth page
 
@@ -178,7 +182,7 @@ Routes
 
 * /daum/auth
 
-  * request [get] : callback (url, option)
+  * request [get] : callback (url, option), host (url, option)
 
   * response : redirect to daum OAuth page
 
@@ -257,6 +261,8 @@ Initialize
   // OR OAuth2 + userObject Handler
   app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
   ```
+  
+* Full code is in [test.js](https://github.com/gimdongwoo/parse-oauth2-sns/blob/master/test.js)
 
 Addon Features
 --------------
