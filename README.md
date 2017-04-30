@@ -41,7 +41,7 @@ How to Use
 1. Open auth url with URL in callback parameter : /facebook/auth?callback=URL
 
   ```javascript
-  window.location.href = 'http://__your_host__/oauth2/facebook/auth?callback=' + encodeURIComponent('/login/callback?type=facebook')
+  window.location.href = 'http://__your_host__/oauth2/facebook/auth?callback=' + encodeURIComponent('/loginCallback?type=facebook')
   ```
   | Params | Type | Description |
   |--------|------|:------------|
@@ -51,7 +51,7 @@ How to Use
 2. Then URL is called, get authdata from querystring.
 
   ```javascript
-  http://__host__/loginCallback/facebook?access_token=...& expiration_date=...
+  http://__host__/loginCallback?type=facebook&access_token=...& expiration_date=...
   ```
 
 
@@ -107,7 +107,7 @@ Routes
   ```javascript
   {"access_token":"...","user":"..."}
   ```
-  
+
 * /instagram/login
 
   * request [post] : json (instagram auth info)
@@ -145,7 +145,7 @@ Routes
   ```javascript  
   [{images, caption, comments, ...}, ...]
   ```
-  
+
 ### Naver Routes
 
 * /naver/auth
@@ -195,7 +195,7 @@ Routes
   ```javascript
   {"access_token":"...","expiration_date":"..."}
   ```
-  
+
 * /daum/login
 
   * request [post] : json (daum auth info)
@@ -226,6 +226,10 @@ Initialize
   process.env.FB_SECRETS = ["__fb_secret__"];
   process.env.INSTA_APPIDS = ["__insta_key__"];
   process.env.INSTA_SECRETS = ["__insta_secret__"];
+  process.env.NAVER_APPIDS = ["__naver_key__"];
+  process.env.NAVER_SECRETS = ["__naver_secret__"];
+  process.env.DAUM_APPIDS = ["__daum_key__"];
+  process.env.DAUM_SECRETS = ["__daum_secret__"];
   ```
 
 ### Router using Express
@@ -249,7 +253,7 @@ Initialize
   ```javascript
   // for use req.body
   app.use(bodyParser.json());
-  
+
   // OAuth2
   app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2' }));
   ```
@@ -257,11 +261,11 @@ Initialize
   ```javascript
   // for use req.body
   app.use(bodyParser.json());
-  
+
   // OR OAuth2 + userObject Handler
   app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
   ```
-  
+
 * Full code is in [test.js](https://github.com/gimdongwoo/parse-oauth2-sns/blob/master/test.js)
 
 Addon Features
