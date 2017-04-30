@@ -254,14 +254,16 @@ Initialize
   process.env.SERVER_URL = "http://__host__:__port__/parse"
   process.env.APP_ID = "__app_id__";
   process.env.MASTER_KEY = "__master_key__";
-  process.env.FB_APPIDS = ["__fb_key__"];
-  process.env.FB_SECRETS = ["__fb_secret__"];
-  process.env.INSTA_APPIDS = ["__insta_key__"];
-  process.env.INSTA_SECRETS = ["__insta_secret__"];
-  process.env.NAVER_APPIDS = ["__naver_key__"];
-  process.env.NAVER_SECRETS = ["__naver_secret__"];
-  process.env.DAUM_APPIDS = ["__daum_key__"];
-  process.env.DAUM_SECRETS = ["__daum_secret__"];
+  process.env.FB_APPIDS = "__fb_key__";
+  process.env.FB_SECRETS = "__fb_secret__";
+  process.env.GOOGLE_APPIDS = "__google_key__";
+  process.env.GOOGLE_SECRETS = "__goole_secret__";
+  process.env.INSTA_APPIDS = "__insta_key__";
+  process.env.INSTA_SECRETS = "__insta_secret__";
+  process.env.NAVER_APPIDS = "__naver_key__";
+  process.env.NAVER_SECRETS = "__naver_secret__";
+  process.env.DAUM_APPIDS = "__daum_key__";
+  process.env.DAUM_SECRETS = "__daum_secret__";
   ```
 
 ### Router using Express
