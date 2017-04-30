@@ -89,6 +89,38 @@ Routes
   ```javascript
   {"objectId": "ziJdB2jBul", "username": "__facebook.email__", authData, ...}
   ```
+  
+### Google Routes
+
+* /google/auth
+
+  * request [get] : callback (url, option), host (url, option)
+
+  * response : redirect to Google OAuth page
+
+* /google/callback
+
+  * request : from google OAuth page
+
+  * response : json
+
+  ```javascript
+ {"access_token":"...","expiration_date":"..."}
+  ```
+
+* /google/login
+
+  * request [post] : json (google auth info)
+
+  ```javascript
+  {"access_token":"...","expiration_date":"..."}
+  ```
+
+  * response : parse-serve user object (username equal to google email)
+
+  ```javascript
+  {"objectId": "ziJdB2jBul", "username": "__google.email__", authData, ...}
+  ```
 
 ### Instagram Routes
 
