@@ -57,6 +57,18 @@ function fbOAuth2() {
   );
 }
 
+function googleOAuth2() {
+  const appId = keyConverter(process.env.GOOGLE_APPIDS);
+  const secret = keyConverter(process.env.GOOGLE_SECRETS);
+  return new OAuth2(appId,
+    secret,
+    '',
+    'https://accounts.google.com/o/oauth2/v2/auth',
+    'https://www.googleapis.com/oauth2/v4/token',
+    null
+  );
+}
+
 function instaOAuth2() {
   const appId = keyConverter(process.env.INSTA_APPIDS);
   const secret = keyConverter(process.env.INSTA_SECRETS);
@@ -106,6 +118,11 @@ export default class SocialOAuth2 {
     api.get('/facebook/callback', (req, res) => router.facebookCallback(req, res));
     api.post('/facebook/login', (req, res) => router.facebookLogin(req, res));
 
+    // google
+    api.get('/google/auth', (req, res) => router.googleAuth(req, res));
+    api.get('/google/callback', (req, res) => router.googleCallback(req, res));
+    api.post('/google/login', (req, res) => router.googleLogin(req, res));
+
     // instagram
     api.get('/instagram/auth', (req, res) => router.instagramAuth(req, res));
     api.get('/instagram/callback', (req, res) => router.instagramCallback(req, res));
@@ -133,6 +150,10 @@ export default class SocialOAuth2 {
     // facebook
     this.fbOAuth2 = fbOAuth2();
     this.fbRedirectUri = path.join(_path, '/facebook/callback');
+
+    // google
+    this.googleOAuth2 = googleOAuth2();
+    this.googleRedirectUri = path.join(_path, '/google/callback');
 
     // instagram
     this.instaOAuth2 = instaOAuth2();
@@ -265,6 +286,138 @@ export default class SocialOAuth2 {
             name: profile.name,
             email: profile.email,
             socialType: 'facebook',
+            socialProfile: profile,
+            profileImage: { url: profileImageUrl },
+            authData: _authData
+          };
+          parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
+            if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
+            // reload
+            parseRest.get('/users/me').then((_user) => {
+              // end
+              return res.json(userHandler(req, _user));
+            }, errorFn);
+          }, errorFn);
+        }
+      }, errorFn);
+    });
+  }
+
+  //
+  // google
+  //
+  googleAuth(req, res) {
+    // For eg. "http://localhost:3000/google/callback"
+    let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.googleRedirectUri);
+    if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
+    const params = { redirect_uri: redirectUri, scope: 'email profile', response_type: 'code' };
+    console.log('params', params);
+    return res.redirect(this.googleOAuth2.getAuthorizeUrl(params));
+  }
+
+  googleCallback(req, res) {
+    if (req.error_reason) {
+      res.send(req.error_reason);
+    }
+    if (req.query && req.query.code) {
+      let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.googleRedirectUri);
+      if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
+      // For eg. "/google/callback"
+      this.googleOAuth2.getOAuthAccessToken(req.query.code, {
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri
+      }, (err, accessToken, refreshToken, params) => {
+        if (err) {
+          console.error(err);
+          return res.send(err);
+        }
+
+        const googleAuth = {
+          access_token: accessToken,
+          expiration_date: params.expires_in
+        };
+        // when custom callback
+        if (req.query && req.query.callback) {
+          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
+          return res.redirect(req.query.callback + joint + qsStringify(googleAuth));
+        }
+        return res.json(googleAuth);
+      });
+    }
+  }
+
+  /**
+   * @param {String} accessToken
+   * @return {Object} parse user
+   */
+  googleLogin(req, res) {
+    const { body = {}, session = {} } = req;
+    console.log('body', body);
+    console.log('session', session);
+    const accessToken = body.access_token || session.access_token;
+    const expires = body.expiration_date || session.expiration_date;
+    if (!accessToken) return res.status(500).json({ code: 101, error: 'Invalid google access_token' }).end();
+
+    function errorFn(err) {
+      console.error(err);
+      return res.status(500).json(err).end();
+    }
+
+    const userHandler = (_req, _user) => {
+      let user = defaultUserHandler(_req, _user);
+      if (this.userHandler) user = this.userHandler(_req, user);
+      return user;
+    };
+
+    // https://developers.google.com/oauthplayground
+    this.googleOAuth2.get('https://www.googleapis.com/oauth2/v2/userinfo', accessToken, (err, data/* , response */) => {
+      if (err) {
+        return errorFn(err);
+      }
+
+      const profile = JSON.parse(data);
+      console.log(profile);
+      const profileImageUrl = profile.picture;
+
+      const _authData = {
+        google: {
+          id: profile.id,
+          access_token: accessToken,
+          expiration_date: expires
+        }
+      };
+
+      const parseRest = new ParseRest(req);
+      parseRest.get('/users', { where: { username: profile.email } }, { useMasterKey: true }).then((users) => {
+        if (users && users[0]) {
+          // Retrieving
+          const user = users[0];
+          // ban user
+          if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
+          // authData save
+          const _newAuthData = { ...user.authData, ..._authData };
+          // save param
+          const _param = { authData: _newAuthData };
+          parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
+            // session query
+            parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
+              if (sessions && sessions[0]) {
+                const _session = sessions[0];
+                if (typeof req.session === 'object') req.session.sessionToken = _session.sessionToken;
+                // end
+                return res.json(userHandler(req, { ...user, ..._param }));
+              }
+              return errorFn({ code: 101, error: 'sessions not exist' });
+            }, errorFn);
+          }, errorFn);
+        } else {
+          // New
+          const user = {
+            username: profile.email,
+            password: (typeof profile.id === 'number' ? profile.id.toString() : profile.id),
+            name: profile.name,
+            email: profile.email,
+            socialType: 'google',
             socialProfile: profile,
             profileImage: { url: profileImageUrl },
             authData: _authData
@@ -422,7 +575,7 @@ export default class SocialOAuth2 {
     const accessToken = body.access_token || session.access_token;
     const userId = body.userId || (session.user && session.user.objectId);
     const username = body.username || (session.user && session.user.username);
-    if (!accessToken) return res.status(500).json({ code: 101, error: 'Invalid facebook access_token' }).end();
+    if (!accessToken) return res.status(500).json({ code: 101, error: 'Invalid instagram access_token' }).end();
     if (!userId && !username) return res.status(500).json({ code: 102, error: 'Invalid parameter : userId or username' }).end();
 
     function errorFn(err) {

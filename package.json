@@ -14,10 +14,12 @@
     "url": "git+https://github.com/gimdongwoo/parse-oauth2-sns.git"
   },
   "keywords": [
+    "parse-server",
     "oauth2",
     "nodejs",
     "express",
     "facebook",
+    "google",
     "instagram",
     "social-login",
     "sns",
