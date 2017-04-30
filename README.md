@@ -4,7 +4,7 @@ Parse OAuth2 SNS
 [![npm version](https://badge.fury.io/js/parse-oauth2-sns.svg)](https://badge.fury.io/js/parse-oauth2-sns)
 
 > Node.JS & Express module for
-> social (Facebook, Instagram) auth and login to [parse-server](https://github.com/ParsePlatform/parse-server).
+> social (Facebook, Google, Instagram) auth and login to [parse-server](https://github.com/ParsePlatform/parse-server).
 > Plus, Korean SNS supports (Naver, Daum)
 
 Install
@@ -89,7 +89,7 @@ Routes
   ```javascript
   {"objectId": "ziJdB2jBul", "username": "__facebook.email__", authData, ...}
   ```
-  
+
 ### Google Routes
 
 * /google/auth
