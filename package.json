@@ -6,8 +6,8 @@
   "scripts": {
     "build": "babel src --presets=babel-preset-es2015,babel-preset-stage-0 --out-dir lib",
     "prepublish": "npm run build",
-    "dev": "mongodb-runner start && node test.js",
-    "test": "npm run build && npm run dev"
+    "dev-server": "mongodb-runner start && node test.js",
+    "dev": "npm run build && npm run dev-server"
   },
   "repository": {
     "type": "git",

@@ -105,6 +105,16 @@ function daumOAuth2() {
   );
 }
 
+function makeRedirectUri(req, redirectUri) {
+  let _redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), redirectUri);
+  const _urlQuery = [];
+  if (req.query && req.query.callback) _urlQuery.push('callback=' + encodeURIComponent(req.query.callback));
+  if (req.query && req.query.host) _urlQuery.push('host=' + encodeURIComponent(req.query.host));
+  if (_urlQuery.length) _redirectUri += '?' + _urlQuery.join('&');
+
+  return _redirectUri;
+}
+
 export default class SocialOAuth2 {
   /**
    * @param {Object?} api - Express router
@@ -176,9 +186,7 @@ export default class SocialOAuth2 {
   //
   facebookAuth(req, res) {
     // For eg. "http://localhost:3000/facebook/callback"
-    let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.fbRedirectUri);
-    if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
-    const params = { redirect_uri: redirectUri, scope: 'email,public_profile' };
+    const params = { redirect_uri: makeRedirectUri(req, this.fbRedirectUri), scope: 'email,public_profile' };
     console.log('params', params);
     return res.redirect(this.fbOAuth2.getAuthorizeUrl(params));
   }
@@ -188,12 +196,10 @@ export default class SocialOAuth2 {
       res.send(req.error_reason);
     }
     if (req.query && req.query.code) {
-      let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.fbRedirectUri);
-      if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
       // For eg. "/facebook/callback"
       this.fbOAuth2.getOAuthAccessToken(req.query.code, {
         grant_type: 'authorization_code',
-        redirect_uri: redirectUri
+        redirect_uri: makeRedirectUri(req, this.fbRedirectUri)
       }, (err, accessToken, refreshToken, params) => {
         if (err) {
           console.error(err);
@@ -308,9 +314,7 @@ export default class SocialOAuth2 {
   //
   googleAuth(req, res) {
     // For eg. "http://localhost:3000/google/callback"
-    let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.googleRedirectUri);
-    if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
-    const params = { redirect_uri: redirectUri, scope: 'email profile', response_type: 'code' };
+    const params = { redirect_uri: makeRedirectUri(req, this.googleRedirectUri), scope: 'email profile', response_type: 'code' };
     console.log('params', params);
     return res.redirect(this.googleOAuth2.getAuthorizeUrl(params));
   }
@@ -320,12 +324,10 @@ export default class SocialOAuth2 {
       res.send(req.error_reason);
     }
     if (req.query && req.query.code) {
-      let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.googleRedirectUri);
-      if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
       // For eg. "/google/callback"
       this.googleOAuth2.getOAuthAccessToken(req.query.code, {
         grant_type: 'authorization_code',
-        redirect_uri: redirectUri
+        redirect_uri: makeRedirectUri(req, this.googleRedirectUri)
       }, (err, accessToken, refreshToken, params) => {
         if (err) {
           console.error(err);
@@ -440,9 +442,7 @@ export default class SocialOAuth2 {
   //
   instagramAuth(req, res) {
     // For eg. "http://localhost:3000/instagram/callback"
-    let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.instaRedirectUri);
-    if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
-    const params = { redirect_uri: redirectUri, scope: 'basic public_content', response_type: 'code' };
+    const params = { redirect_uri: makeRedirectUri(req, this.instaRedirectUri), scope: 'basic public_content', response_type: 'code' };
     console.log('params', params);
     return res.redirect(this.instaOAuth2.getAuthorizeUrl(params));
   }
@@ -452,12 +452,10 @@ export default class SocialOAuth2 {
       res.send(req.error_reason);
     }
     if (req.query && req.query.code) {
-      let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.instaRedirectUri);
-      if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
       // For eg. "/instagram/callback"
       this.instaOAuth2.getOAuthAccessToken(req.query.code, {
         grant_type: 'authorization_code',
-        redirect_uri: redirectUri
+        redirect_uri: makeRedirectUri(req, this.instaRedirectUri)
       }, (err, accessToken, refreshToken, params) => {
         if (err) {
           console.error(err);
@@ -678,9 +676,7 @@ export default class SocialOAuth2 {
   //
   naverAuth(req, res) {
     // For eg. "http://localhost:3000/naver/callback"
-    let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.naverRedirectUri);
-    if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
-    const params = { redirect_uri: redirectUri, response_type: 'code'  };
+    const params = { redirect_uri: makeRedirectUri(req, this.naverRedirectUri), response_type: 'code'  };
     console.log('params', params);
     return res.redirect(this.naverOAuth2.getAuthorizeUrl(params));
   }
@@ -690,12 +686,10 @@ export default class SocialOAuth2 {
       res.send(req.error_reason);
     }
     if (req.query && req.query.code) {
-      let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.naverRedirectUri);
-      if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
       // For eg. "/naver/callback"
       this.naverOAuth2.getOAuthAccessToken(req.query.code, {
         grant_type: 'authorization_code',
-        redirect_uri: redirectUri
+        redirect_uri: makeRedirectUri(req, this.naverRedirectUri)
       }, (err, accessToken, refreshToken, params) => {
         if (err) {
           console.error(err);
@@ -809,9 +803,7 @@ export default class SocialOAuth2 {
   //
   daumAuth(req, res) {
     // For eg. "http://localhost:3000/daum/callback"
-    let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.daumRedirectUri);
-    if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
-    const params = { redirect_uri: redirectUri, response_type: 'code'  };
+    const params = { redirect_uri: makeRedirectUri(req, this.daumRedirectUri), response_type: 'code'  };
     console.log('params', params);
     return res.redirect(this.daumOAuth2.getAuthorizeUrl(params));
   }
@@ -821,12 +813,10 @@ export default class SocialOAuth2 {
       res.send(req.error_reason);
     }
     if (req.query && req.query.code) {
-      let redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), this.daumRedirectUri);
-      if (req.query && req.query.callback) redirectUri += '?callback=' + encodeURIComponent(req.query.callback);
       // For eg. "/daum/callback"
       this.daumOAuth2.getOAuthAccessToken(req.query.code, {
         grant_type: 'authorization_code',
-        redirect_uri: redirectUri
+        redirect_uri: makeRedirectUri(req, this.daumRedirectUri)
       }, (err, accessToken, refreshToken, params) => {
         if (err) {
           console.error(err);
