@@ -253,7 +253,7 @@ export default class SocialOAuth2 {
       console.log(profile);
       const profileImageUrl = 'https://graph.facebook.com/' + profile.id + '/picture';
 
-      const _authData = {
+      const authData = {
         facebook: {
           id: profile.id,
           access_token: accessToken,
@@ -268,10 +268,8 @@ export default class SocialOAuth2 {
           const user = users[0];
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
-          // authData save
-          const _newAuthData = { ...user.authData, ..._authData };
           // save param
-          const _param = { authData: _newAuthData };
+          const _param = { authData };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -294,7 +292,7 @@ export default class SocialOAuth2 {
             socialType: 'facebook',
             socialProfile: profile,
             profileImage: { url: profileImageUrl },
-            authData: _authData
+            authData
           };
           parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
             if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
@@ -381,7 +379,7 @@ export default class SocialOAuth2 {
       console.log(profile);
       const profileImageUrl = profile.picture;
 
-      const _authData = {
+      const authData = {
         google: {
           id: profile.id,
           access_token: accessToken,
@@ -396,10 +394,8 @@ export default class SocialOAuth2 {
           const user = users[0];
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
-          // authData save
-          const _newAuthData = { ...user.authData, ..._authData };
           // save param
-          const _param = { authData: _newAuthData };
+          const _param = { authData };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -422,7 +418,7 @@ export default class SocialOAuth2 {
             socialType: 'google',
             socialProfile: profile,
             profileImage: { url: profileImageUrl },
-            authData: _authData
+            authData
           };
           parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
             if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
@@ -507,7 +503,7 @@ export default class SocialOAuth2 {
       const profile = JSON.parse(data).data;
       console.log(profile);
 
-      const _authData = {
+      const authData = {
         instagram: {
           id: profile.id,
           access_token: accessToken
@@ -521,10 +517,8 @@ export default class SocialOAuth2 {
           const user = users[0];
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
-          // authData save
-          const _newAuthData = { ...user.authData, ..._authData };
           // save param
-          const _param = { authData: _newAuthData };
+          const _param = { authData };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -547,7 +541,7 @@ export default class SocialOAuth2 {
             socialType: 'instagram',
             socialProfile: profile,
             profileImage: { url: profile.profile_picture },
-            authData: _authData
+            authData
           };
           parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
             if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
@@ -595,7 +589,7 @@ export default class SocialOAuth2 {
         const profile = JSON.parse(data).data;
         console.log(profile);
 
-        const _authData = {
+        const authData = {
           instagram: {
             id: profile.id,
             access_token: accessToken
@@ -609,10 +603,10 @@ export default class SocialOAuth2 {
             // Retrieving
             const user = users[0];
             // authData save
-            const _newAuthData = { ...user.authData, ..._authData };
-            return parseRest.put('/users/' + user.objectId, { authData: _newAuthData }, { useMasterKey: true }).then(() => {
+            const newAuthData = { ...user.authData, ...authData };
+            return parseRest.put('/users/' + user.objectId, { authData: newAuthData }, { useMasterKey: true }).then(() => {
               // keep
-              user.authData = _newAuthData;
+              user.authData = newAuthData;
               // session query
               parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
                 if (sessions && sessions[0]) {
@@ -742,7 +736,7 @@ export default class SocialOAuth2 {
       const profile = (JSON.parse(data)).response;
       console.log(profile);
 
-      const _authData = {
+      const authDataEtc = {
         naver: {
           id: profile.id,
           access_token: accessToken,
@@ -757,10 +751,8 @@ export default class SocialOAuth2 {
           const user = users[0];
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
-          // authData save
-          const _newAuthData = { ...user.authDataEtc, ..._authData };
           // save param
-          const _param = { authDataEtc: _newAuthData };
+          const _param = { authDataEtc };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -783,7 +775,7 @@ export default class SocialOAuth2 {
             socialType: 'naver',
             socialProfile: profile,
             profileImage: { url: profile.profile_image },
-            authDataEtc: _authData
+            authDataEtc
           };
           parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
             if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
@@ -869,7 +861,7 @@ export default class SocialOAuth2 {
       const profile = (JSON.parse(data)).result;
       console.log(profile);
 
-      const _authData = {
+      const authDataEtc = {
         daum: {
           id: profile.id,
           access_token: accessToken,
@@ -884,10 +876,8 @@ export default class SocialOAuth2 {
           const user = users[0];
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
-          // authData save
-          const _newAuthData = { ...user.authDataEtc, ..._authData };
           // save param
-          const _param = { authDataEtc: _newAuthData };
+          const _param = { authDataEtc };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -910,7 +900,7 @@ export default class SocialOAuth2 {
             socialType: 'daum',
             socialProfile: profile,
             profileImage: { url: profile.imagePath },
-            authDataEtc: _authData
+            authDataEtc
           };
           parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
             if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
