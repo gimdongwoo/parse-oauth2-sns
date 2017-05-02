@@ -269,7 +269,7 @@ export default class SocialOAuth2 {
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
           // save param
-          const _param = { authData };
+          const _param = { socialType: 'facebook', authData };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -395,7 +395,7 @@ export default class SocialOAuth2 {
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
           // save param
-          const _param = { authData };
+          const _param = { socialType: 'google', authData };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -518,7 +518,7 @@ export default class SocialOAuth2 {
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
           // save param
-          const _param = { authData };
+          const _param = { socialType: 'instagram', authData };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -752,7 +752,7 @@ export default class SocialOAuth2 {
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
           // save param
-          const _param = { authDataEtc };
+          const _param = { socialType: 'naver', authDataEtc };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
@@ -877,7 +877,7 @@ export default class SocialOAuth2 {
           // ban user
           if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
           // save param
-          const _param = { authDataEtc };
+          const _param = { socialType: 'daum', authDataEtc };
           parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
             // session query
             parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
