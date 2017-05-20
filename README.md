@@ -73,7 +73,7 @@ Routes
   * response : json
 
   ```javascript
- {"access_token":"...","expiration_date":"..."}
+  {"access_token":"...","expiration_date":"..."}
   ```
 
 * /facebook/login
@@ -105,7 +105,7 @@ Routes
   * response : json
 
   ```javascript
- {"access_token":"...","expiration_date":"..."}
+  {"access_token":"...","expiration_date":"..."}
   ```
 
 * /google/login
