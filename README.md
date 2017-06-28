@@ -1,11 +1,11 @@
-Parse OAuth2 SNS
+Parse OAuth2 SNS (Social Media)
 ================
 
 [![npm version](https://badge.fury.io/js/parse-oauth2-sns.svg)](https://badge.fury.io/js/parse-oauth2-sns)
 
 > Node.JS & Express module for
-> social (Facebook, Google, Instagram) auth and login to [parse-server](https://github.com/ParsePlatform/parse-server).
-> Plus, Korean SNS supports (Naver, Daum)
+> social media (Facebook, Google, Instagram) auth and login to [parse-server](https://github.com/ParsePlatform/parse-server).
+> Plus, Korean SNS (Social Media) supports (Naver, Daum)
 
 Install
 -------
