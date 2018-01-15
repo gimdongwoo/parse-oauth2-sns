@@ -21,6 +21,8 @@ process.env.NAVER_APPIDS = ["Uyjq1a8Vz0nngCdlMZZw"];
 process.env.NAVER_SECRETS = ["_Xigkgo0SD"];
 process.env.DAUM_APPIDS = ["6600734411403537733"];
 process.env.DAUM_SECRETS = ["d5bfe986d88f43932736deb6a4aa1e09"];
+process.env.KAKAO_RESTKEY = ["ba78f36569c3c34fc8af6aa324ddb499"];
+process.env.KAKAO_SECRETS = ["1XyhYj0GXcY1nT0zlyTFQ3E16RLmpaet"];
 
 // app
 var app = express();

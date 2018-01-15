@@ -105,6 +105,18 @@ function daumOAuth2() {
   );
 }
 
+function kakaoOAuth2() {
+  const appId = keyConverter(process.env.KAKAO_RESTKEY);
+  const secret = keyConverter(process.env.KAKAO_SECRETS);
+  return new OAuth2(appId,
+    secret,
+    '',
+    'https://kauth.kakao.com/oauth/authorize',
+    'https://kauth.kakao.com/oauth/token',
+    null
+  );
+}
+
 function makeRedirectUri(req, redirectUri) {
   let _redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), redirectUri);
   const _urlQuery = [];
@@ -150,6 +162,11 @@ export default class SocialOAuth2 {
     api.get('/daum/callback', (req, res) => router.daumCallback(req, res));
     api.post('/daum/login', (req, res) => router.daumLogin(req, res));
 
+    // kakao
+    api.get('/kakao/auth', (req, res) => router.kakaoAuth(req, res));
+    api.get('/kakao/callback', (req, res) => router.kakaoCallback(req, res));
+    api.post('/kakao/login', (req, res) => router.kakaoLogin(req, res));
+
     return api;
   }
 
@@ -176,6 +193,10 @@ export default class SocialOAuth2 {
     // daum
     this.daumOAuth2 = daumOAuth2();
     this.daumRedirectUri = path.join(_path, '/daum/callback');
+
+    // kakao
+    this.kakaoOAuth2 = kakaoOAuth2();
+    this.kakaoRedirectUri = path.join(_path, '/kakao/callback');
 
     // userHandler
     this.userHandler = _userHandler;
@@ -900,6 +921,131 @@ export default class SocialOAuth2 {
             socialType: 'daum',
             socialProfile: profile,
             profileImage: { url: profile.imagePath },
+            authDataEtc
+          };
+          parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
+            if (typeof req.session === 'object') req.session.sessionToken = result.sessionToken;
+            // reload
+            parseRest.get('/users/me').then((_user) => {
+              // end
+              return res.json(userHandler(req, _user));
+            }, errorFn);
+          }, errorFn);
+        }
+      }, errorFn);
+    });
+  }
+
+  //
+  // kakao
+  //
+  kakaoAuth(req, res) {
+    // For eg. "http://localhost:3000/kakao/callback"
+    const params = { redirect_uri: makeRedirectUri(req, this.kakaoRedirectUri), response_type: 'code'  };
+    console.log('params', params);
+    return res.redirect(this.kakaoOAuth2.getAuthorizeUrl(params));
+  }
+
+  kakaoCallback(req, res) {
+    if (req.error_reason) {
+      res.send(req.error_reason);
+    }
+    if (req.query && req.query.code) {
+      // For eg. "/kakao/callback"
+      this.kakaoOAuth2.getOAuthAccessToken(req.query.code, {
+        grant_type: 'authorization_code',
+        redirect_uri: makeRedirectUri(req, this.kakaoRedirectUri)
+      }, (err, accessToken, refreshToken, params) => {
+        if (err) {
+          console.error(err);
+          return res.send(err);
+        }
+
+        const kakaoAuth = {
+          access_token: accessToken,
+          expiration_date: params.expires_in
+        };
+        // when custom callback
+        if (req.query && req.query.callback) {
+          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
+          return res.redirect(req.query.callback + joint + qsStringify(kakaoAuth));
+        }
+        return res.json(kakaoAuth);
+      });
+    }
+  }
+
+  /**
+   * @param {String} accessToken
+   * @return {Object} parse user
+   */
+  kakaoLogin(req, res) {
+    const { body = {}, session = {} } = req;
+    console.log('body', body);
+    console.log('session', session);
+    const accessToken = body.access_token || session.access_token;
+    const expires = body.expiration_date || session.expiration_date;
+    if (!accessToken) return res.status(500).json({ code: 101, error: 'Invalid kakao access_token' }).end();
+
+    function errorFn(err) {
+      console.error(err);
+      return res.status(500).json(err).end();
+    }
+
+    const userHandler = (_req, _user) => {
+      let user = defaultUserHandler(_req, _user);
+      if (this.userHandler) user = this.userHandler(_req, user);
+      return user;
+    };
+
+    // https://developers.kakao.com/docs/restapi/user-management#%EB%A1%9C%EA%B7%B8%EC%9D%B8
+    this.kakaoOAuth2.get('https://kapi.kakao.com/v1/user/me', accessToken, (err, data/* , response */) => {
+      if (err) {
+        return errorFn(err);
+      }
+
+      const profile = (JSON.parse(data));
+      console.log(profile);
+
+      const authDataEtc = {
+        kakao: {
+          id: profile.id,
+          access_token: accessToken,
+          expiration_date: expires
+        }
+      };
+
+      const parseRest = new ParseRest(req);
+      parseRest.get('/users', { where: { username: profile.kaccount_email || profile.id } }, { useMasterKey: true }).then((users) => {
+        if (users && users[0]) {
+          // Retrieving
+          const user = users[0];
+          // ban user
+          if (user.isBanned) return errorFn({ code: 101, error: 'User is banned' });
+          // save param
+          const _param = { socialType: 'kakao', authDataEtc };
+          parseRest.put('/users/' + user.objectId, _param, { useMasterKey: true }).then(() => {
+            // session query
+            parseRest.get('/sessions', { where: { user: { __type: 'Pointer', className: '_User', objectId: user.objectId } } }, { useMasterKey: true }).then((sessions) => {
+              if (sessions && sessions[0]) {
+                const _session = sessions[0];
+                if (typeof req.session === 'object') req.session.sessionToken = _session.sessionToken;
+                // end
+                return res.json(userHandler(req, { ...user, ..._param }));
+              }
+              return errorFn({ code: 101, error: 'sessions not exist' });
+            }, errorFn);
+          }, errorFn);
+        } else {
+          // New
+          const user = {
+            username: profile.kaccount_email || profile.id,
+            password: (typeof profile.id === 'number' ? profile.id.toString() : profile.id),
+            name: profile.properties.nickname,
+            // email: profile.email,
+            socialType: 'kakao',
+            socialProfile: profile,
+            profileImage: { url: profile.properties.profile_image },
             authDataEtc
           };
           parseRest.post('/users', user, { useMasterKey: true }).then((result) => {
