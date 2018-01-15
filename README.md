@@ -5,7 +5,7 @@ Parse OAuth2 SNS (Social Media)
 
 > Node.JS & Express module for
 > social media (Facebook, Google, Instagram) auth and login to [parse-server](https://github.com/ParsePlatform/parse-server).
-> Plus, Korean SNS (Social Media) supports (Naver, Daum)
+> Plus, Korean SNS (Social Media) supports (Naver, Daum, Kakao)
 
 Install
 -------
@@ -13,7 +13,7 @@ Install
 ```
 npm install --save parse-oauth2-sns
 ```
-
+np
 How to Use
 ----------
 
@@ -240,6 +240,38 @@ Routes
 
   ```javascript
   {"objectId": "ziJdB2jBul", "username": "__daum.userid__", authData, ...}
+  ```
+
+### Kako Routes
+
+* /kakao/auth
+
+  * request [get] : callback (url, option), host (url, option)
+
+  * response : redirect to kakao OAuth page
+
+* /kakao/callback
+
+  * request : from kakao OAuth page
+
+  * response : json
+
+  ```javascript
+  {"access_token":"...","expiration_date":"..."}
+  ```
+
+* /kakao/login
+
+  * request [post] : json (kakao auth info)
+
+  ```javascript
+  {"access_token":"...","expiration_date":"..."}
+  ```
+
+  * response : parse-server user object (username equal to kakao email or kakao userid)
+
+  ```javascript
+  {"objectId": "ziJdB2jBul", "username": "__kakao.(kaccount_email||id)__", authData, ...}
   ```
 
 Initialize
