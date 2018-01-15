@@ -296,6 +296,8 @@ Initialize
   process.env.NAVER_SECRETS = "__naver_secret__";
   process.env.DAUM_APPIDS = "__daum_key__";
   process.env.DAUM_SECRETS = "__daum_secret__";
+  process.env.KAKAO_RESTKEY = "__kakao_restkey__";
+  process.env.KAKAO_SECRETS = "__kakao_secret__";
   ```
 
 ### Router using Express
