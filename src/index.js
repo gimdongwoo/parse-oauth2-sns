@@ -37,9 +37,9 @@ function keyConverter(_envKey) {
   let returnKey = _envKey;
 
   if (typeof _envKey === 'object' && Array.isArray(_envKey)) {
-    returnKey = _envKey[0];
+    [returnKey] = _envKey;
   } else if (typeof _envKey === 'string' && _envKey.indexOf('[') > -1) {
-    returnKey = (JSON.parse(_envKey))[0];
+    [returnKey] = (JSON.parse(_envKey));
   }
 
   return returnKey;
@@ -48,7 +48,8 @@ function keyConverter(_envKey) {
 function fbOAuth2() {
   const appId = keyConverter(process.env.FB_APPIDS);
   const secret = keyConverter(process.env.FB_SECRETS);
-  return new OAuth2(appId,
+  return new OAuth2(
+    appId,
     secret,
     '',
     'https://www.facebook.com/dialog/oauth',
@@ -60,7 +61,8 @@ function fbOAuth2() {
 function googleOAuth2() {
   const appId = keyConverter(process.env.GOOGLE_APPIDS);
   const secret = keyConverter(process.env.GOOGLE_SECRETS);
-  return new OAuth2(appId,
+  return new OAuth2(
+    appId,
     secret,
     '',
     'https://accounts.google.com/o/oauth2/v2/auth',
@@ -72,7 +74,8 @@ function googleOAuth2() {
 function instaOAuth2() {
   const appId = keyConverter(process.env.INSTA_APPIDS);
   const secret = keyConverter(process.env.INSTA_SECRETS);
-  return new OAuth2(appId,
+  return new OAuth2(
+    appId,
     secret,
     '',
     'https://api.instagram.com/oauth/authorize/',
@@ -84,7 +87,8 @@ function instaOAuth2() {
 function naverOAuth2() {
   const appId = keyConverter(process.env.NAVER_APPIDS);
   const secret = keyConverter(process.env.NAVER_SECRETS);
-  return new OAuth2(appId,
+  return new OAuth2(
+    appId,
     secret,
     '',
     'https://nid.naver.com/oauth2.0/authorize',
@@ -96,7 +100,8 @@ function naverOAuth2() {
 function daumOAuth2() {
   const appId = keyConverter(process.env.DAUM_APPIDS);
   const secret = keyConverter(process.env.DAUM_SECRETS);
-  return new OAuth2(appId,
+  return new OAuth2(
+    appId,
     secret,
     '',
     'https://apis.daum.net/oauth2/authorize',
@@ -108,7 +113,8 @@ function daumOAuth2() {
 function kakaoOAuth2() {
   const appId = keyConverter(process.env.KAKAO_RESTKEY);
   const secret = keyConverter(process.env.KAKAO_SECRETS);
-  return new OAuth2(appId,
+  return new OAuth2(
+    appId,
     secret,
     '',
     'https://kauth.kakao.com/oauth/authorize',
@@ -117,14 +123,30 @@ function kakaoOAuth2() {
   );
 }
 
-function makeRedirectUri(req, redirectUri) {
-  let _redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(req.query.host || req.get('host'), redirectUri);
-  const _urlQuery = [];
-  if (req.query && req.query.callback) _urlQuery.push('callback=' + encodeURIComponent(req.query.callback));
-  if (req.query && req.query.host) _urlQuery.push('host=' + encodeURIComponent(req.query.host));
-  if (_urlQuery.length) _redirectUri += '?' + _urlQuery.join('&');
+function makeRedirectUri(req, uri) {
+  let _host = req.get('host');
 
-  return _redirectUri;
+  // query keep to session store
+  const { callback, host } = req.query;
+  if (typeof req.session === 'object' && (callback || host)) {
+    req.session.oauth2 = { callback, host };
+  }
+
+  // host from session store
+  if (req.session.oauth2 && req.session.oauth2.host) _host = req.session.oauth2.host;
+
+  // redirect_uri
+  const redirectUri = (req.secure ? 'https' : 'http') + '://' + path.join(_host, uri);
+  return redirectUri;
+}
+
+function callbackResult(req, res, authData) {
+  if (typeof req.session === 'object' && req.session.oauth2 && req.session.oauth2.callback) {
+    const { callback } = req.session.oauth2;
+    const joint = callback.indexOf('?') > -1 ? '&' : '?';
+    return res.redirect(callback + joint + qsStringify(authData));
+  }
+  return res.json(authData);
 }
 
 export default class SocialOAuth2 {
@@ -232,11 +254,7 @@ export default class SocialOAuth2 {
           expiration_date: params.expires
         };
         // when custom callback
-        if (req.query && req.query.callback) {
-          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
-          return res.redirect(req.query.callback + joint + qsStringify(facebookAuth));
-        }
-        return res.json(facebookAuth);
+        return callbackResult(req, res, facebookAuth);
       });
     }
   }
@@ -358,11 +376,7 @@ export default class SocialOAuth2 {
           expiration_date: params.expires_in
         };
         // when custom callback
-        if (req.query && req.query.callback) {
-          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
-          return res.redirect(req.query.callback + joint + qsStringify(googleAuth));
-        }
-        return res.json(googleAuth);
+        return callbackResult(req, res, googleAuth);
       });
     }
   }
@@ -484,11 +498,7 @@ export default class SocialOAuth2 {
           user: params.user
         };
         // when custom callback
-        if (req.query && req.query.callback) {
-          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
-          return res.redirect(req.query.callback + joint + qsStringify(instagramAuth));
-        }
-        return res.json(instagramAuth);
+        return callbackResult(req, res, instagramAuth);
       });
     }
   }
@@ -691,7 +701,7 @@ export default class SocialOAuth2 {
   //
   naverAuth(req, res) {
     // For eg. "http://localhost:3000/naver/callback"
-    const params = { redirect_uri: makeRedirectUri(req, this.naverRedirectUri), response_type: 'code'  };
+    const params = { redirect_uri: makeRedirectUri(req, this.naverRedirectUri), response_type: 'code' };
     console.log('params', params);
     return res.redirect(this.naverOAuth2.getAuthorizeUrl(params));
   }
@@ -716,11 +726,7 @@ export default class SocialOAuth2 {
           expiration_date: params.expires_in
         };
         // when custom callback
-        if (req.query && req.query.callback) {
-          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
-          return res.redirect(req.query.callback + joint + qsStringify(naverAuth));
-        }
-        return res.json(naverAuth);
+        return callbackResult(req, res, naverAuth);
       });
     }
   }
@@ -816,7 +822,7 @@ export default class SocialOAuth2 {
   //
   daumAuth(req, res) {
     // For eg. "http://localhost:3000/daum/callback"
-    const params = { redirect_uri: makeRedirectUri(req, this.daumRedirectUri), response_type: 'code'  };
+    const params = { redirect_uri: makeRedirectUri(req, this.daumRedirectUri), response_type: 'code' };
     console.log('params', params);
     return res.redirect(this.daumOAuth2.getAuthorizeUrl(params));
   }
@@ -841,11 +847,7 @@ export default class SocialOAuth2 {
           expiration_date: params.expires_in
         };
         // when custom callback
-        if (req.query && req.query.callback) {
-          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
-          return res.redirect(req.query.callback + joint + qsStringify(daumAuth));
-        }
-        return res.json(daumAuth);
+        return callbackResult(req, res, daumAuth);
       });
     }
   }
@@ -941,7 +943,7 @@ export default class SocialOAuth2 {
   //
   kakaoAuth(req, res) {
     // For eg. "http://localhost:3000/kakao/callback"
-    const params = { redirect_uri: makeRedirectUri(req, this.kakaoRedirectUri), response_type: 'code'  };
+    const params = { redirect_uri: makeRedirectUri(req, this.kakaoRedirectUri), response_type: 'code' };
     console.log('params', params);
     return res.redirect(this.kakaoOAuth2.getAuthorizeUrl(params));
   }
@@ -966,11 +968,7 @@ export default class SocialOAuth2 {
           expiration_date: params.expires_in
         };
         // when custom callback
-        if (req.query && req.query.callback) {
-          let joint = req.query.callback.indexOf('?') > -1 ? '&' : '?';
-          return res.redirect(req.query.callback + joint + qsStringify(kakaoAuth));
-        }
-        return res.json(kakaoAuth);
+        return callbackResult(req, res, kakaoAuth);
       });
     }
   }

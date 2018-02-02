@@ -306,12 +306,16 @@ Initialize
 
   ```javascript
   // es6
+  import express from 'express';
+  import session from 'express-session';
   import SocialOAuth2 from 'parse-oauth2-sns';
   import bodyParser from 'body-parser';
   ```
 
   ```javascript
   // es5
+  var express = require('express');
+  var session = require('session');
   var SocialOAuth2 = require('parse-oauth2-sns').default;
   var bodyParser = require('body-parser');
   ```
@@ -319,6 +323,13 @@ Initialize
 * create object
 
   ```javascript
+  // for use req.session
+  app.use(session({
+    secret: '___secret_key_for_session___',
+    resave: false,
+    saveUninitialized: false,
+    // cookie: { maxAge: 60000 }
+  }));
   // for use req.body
   app.use(bodyParser.json());
 
@@ -327,9 +338,6 @@ Initialize
   ```
 
   ```javascript
-  // for use req.body
-  app.use(bodyParser.json());
-
   // OR OAuth2 + userObject Handler
   app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
   ```
