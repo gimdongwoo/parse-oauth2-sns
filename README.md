@@ -1,5 +1,4 @@
-Parse OAuth2 SNS (Social Media)
-================
+# Parse OAuth2 SNS (Social Media)
 
 [![npm version](https://badge.fury.io/js/parse-oauth2-sns.svg)](https://badge.fury.io/js/parse-oauth2-sns)
 
@@ -7,15 +6,16 @@ Parse OAuth2 SNS (Social Media)
 > social media (Facebook, Google, Instagram) auth and login to [parse-server](https://github.com/ParsePlatform/parse-server).
 > Plus, Korean SNS (Social Media) supports (Naver, Daum, Kakao)
 
-Install
--------
+## Install
 
 ```
 npm install --save parse-oauth2-sns
 ```
+
 np
 How to Use
-----------
+
+---
 
 ### For Application
 
@@ -23,40 +23,45 @@ How to Use
 
 2. Open auth url : /facebook/auth
 
-  ```javascript
-  http://__your_host__/oauth2/facebook/auth
-  ```
+
+```javascript
+http://__your_host__/oauth2/facebook/auth
+```
 
 3. Check url changed to '/callback'
 
 4. Then url chenged to '/callback', get authdata from body.
 
-  ```javascript
-  // URL : facebook/callback
-  {"access_token":"...","expiration_date":"..."}
-  ```
+
+```javascript
+// URL : facebook/callback
+{"access_token":"...","expiration_date":"..."}
+```
 
 ### For Web
 
 1. Open auth url with URL in callback parameter : /facebook/auth?callback=URL
 
-  ```javascript
-  window.location.href = 'http://__your_host__/oauth2/facebook/auth?callback=' + encodeURIComponent('/loginCallback?type=facebook')
-  ```
-  | Params | Type | Description |
-  |--------|------|:------------|
-  | callback | string | callback url. Redirected after authentication
-  | host | string | If using proxy, can change api url host. ex) host=__your_host__/api
+
+```javascript
+window.location.href =
+  "http://__your_host__/oauth2/facebook/auth?callback=" +
+  encodeURIComponent("/loginCallback?type=facebook");
+```
+
+| Params   | Type   | Description                                                         |
+| -------- | ------ | :------------------------------------------------------------------ |
+| callback | string | callback url. Redirected after authentication                       |
+| host     | string | If using proxy, can change api url host. ex) host=**your_host**/api |
 
 2. Then URL is called, get authdata from querystring.
 
-  ```javascript
-  http://__host__/loginCallback?type=facebook&access_token=...& expiration_date=...
-  ```
 
+```javascript
+http://__host__/loginCallback?type=facebook&access_token=...& expiration_date=...
+```
 
-Routes
-------
+## Routes
 
 ### Facebook Routes
 
@@ -164,7 +169,7 @@ Routes
 
   * response : parse-server user object linked instagram
 
-  ```javascript  
+  ```javascript
   {"objectId": "ziJdB2jBul", "username": "__username__", authData, ...}
   ```
 
@@ -174,7 +179,7 @@ Routes
 
   * response : instagram posts
 
-  ```javascript  
+  ```javascript
   [{images, caption, comments, ...}, ...]
   ```
 
@@ -274,8 +279,7 @@ Routes
   {"objectId": "ziJdB2jBul", "username": "__kakao.(kaccount_email||id)__", authData, ...}
   ```
 
-Initialize
-----------
+## Initialize
 
 ### Setup up process.env
 
@@ -283,7 +287,7 @@ Initialize
 
   ```javascript
   // Recommend to use 'better-npm-run'.
-  process.env.SERVER_URL = "http://__host__:__port__/parse"
+  process.env.SERVER_URL = "http://__host__:__port__/parse";
   process.env.APP_ID = "__app_id__";
   process.env.MASTER_KEY = "__master_key__";
   process.env.FB_APPIDS = "__fb_key__";
@@ -306,46 +310,48 @@ Initialize
 
   ```javascript
   // es6
-  import express from 'express';
-  import session from 'express-session';
-  import SocialOAuth2 from 'parse-oauth2-sns';
-  import bodyParser from 'body-parser';
+  import express from "express";
+  import session from "express-session";
+  import SocialOAuth2 from "parse-oauth2-sns";
+  import bodyParser from "body-parser";
   ```
 
   ```javascript
   // es5
-  var express = require('express');
-  var session = require('session');
-  var SocialOAuth2 = require('parse-oauth2-sns').default;
-  var bodyParser = require('body-parser');
+  var express = require("express");
+  var session = require("session");
+  var SocialOAuth2 = require("parse-oauth2-sns").default;
+  var bodyParser = require("body-parser");
   ```
 
 * create object
 
   ```javascript
   // for use req.session
-  app.use(session({
-    secret: '___secret_key_for_session___',
-    resave: false,
-    saveUninitialized: false,
-    // cookie: { maxAge: 60000 }
-  }));
+  app.use(
+    session({
+      secret: "___secret_key_for_session___",
+      resave: false,
+      saveUninitialized: false
+      // cookie: { maxAge: 60000 }
+    })
+  );
   // for use req.body
   app.use(bodyParser.json());
 
   // OAuth2
-  app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2' }));
+  app.use("/oauth2", SocialOAuth2.create({ path: "/oauth2" }));
   ```
 
   ```javascript
   // OR OAuth2 + userObject Handler
+  // Handler is normal function or promise function.
   app.use('/oauth2', SocialOAuth2.create({ path: '/oauth2', userHandler: function(req, user) { ...  return user; } }));
   ```
 
 * Full code is in [test.js](https://github.com/gimdongwoo/parse-oauth2-sns/blob/master/test.js)
 
-Addon Features
---------------
+## Addon Features
 
 ### User
 
