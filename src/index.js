@@ -6,7 +6,7 @@ import { Router } from "express";
 import qs from "querystring";
 import { OAuth2 } from "oauth";
 import path from "path";
-import ParseRest from "parse-rest-nodejs";
+import ParseRest from "./ParseRest";
 
 function qsStringify(str) {
   const oldEscape = qs.escape;
@@ -335,7 +335,8 @@ export default class SocialOAuth2 {
           }
         };
 
-        if (!profile.email) return errorFn({ code: 101, error: "Email is unknown" });
+        if (!profile.email)
+          return errorFn({ code: 101, error: "Email is unknown" });
 
         const parseRest = new ParseRest(req);
         parseRest
@@ -379,13 +380,42 @@ export default class SocialOAuth2 {
                         // end
                         return this.userHandler(req, {
                           ...user,
-                          ..._param
+                          ..._param,
+                          sessionToken: _session.sessionToken
                         }).then(handledUser => res.json(handledUser));
                       }
-                      return errorFn({
-                        code: 101,
-                        error: "sessions not exist"
-                      });
+                      // login
+                      const password =
+                        typeof profile.id === "number"
+                          ? profile.id.toString()
+                          : profile.id;
+                      return parseRest
+                        .put(
+                          "/users/" + user.objectId,
+                          { password },
+                          { useMasterKey: true }
+                        )
+                        .then(() => {
+                          return parseRest
+                            .get("/login", {
+                              username: profile.email,
+                              password
+                            })
+                            .then(result => {
+                              // reload
+                              parseRest
+                                .get("/users/me", null, {
+                                  "X-Parse-Session-Token": result.sessionToken
+                                })
+                                .then(_user => {
+                                  // end
+                                  return this.userHandler(req, {
+                                    ..._user,
+                                    sessionToken: result.sessionToken
+                                  }).then(handledUser => res.json(handledUser));
+                                }, errorFn);
+                            }, errorFn);
+                        }, errorFn);
                     }, errorFn);
                 }, errorFn);
             } else {
@@ -406,15 +436,18 @@ export default class SocialOAuth2 {
               parseRest
                 .post("/users", user, { useMasterKey: true })
                 .then(result => {
-                  if (typeof req.session === "object")
-                    req.session.sessionToken = result.sessionToken;
                   // reload
-                  parseRest.get("/users/me").then(_user => {
-                    // end
-                    return this.userHandler(req, _user).then(handledUser =>
-                      res.json(handledUser)
-                    );
-                  }, errorFn);
+                  parseRest
+                    .get("/users/me", null, {
+                      "X-Parse-Session-Token": result.sessionToken
+                    })
+                    .then(_user => {
+                      // end
+                      return this.userHandler(req, {
+                        ..._user,
+                        sessionToken: result.sessionToken
+                      }).then(handledUser => res.json(handledUser));
+                    }, errorFn);
                 }, errorFn);
             }
           }, errorFn);
@@ -510,7 +543,8 @@ export default class SocialOAuth2 {
           }
         };
 
-        if (!profile.email) return errorFn({ code: 101, error: "Email is unknown" });
+        if (!profile.email)
+          return errorFn({ code: 101, error: "Email is unknown" });
 
         const parseRest = new ParseRest(req);
         parseRest
@@ -554,13 +588,42 @@ export default class SocialOAuth2 {
                         // end
                         return this.userHandler(req, {
                           ...user,
-                          ..._param
+                          ..._param,
+                          sessionToken: _session.sessionToken
                         }).then(handledUser => res.json(handledUser));
                       }
-                      return errorFn({
-                        code: 101,
-                        error: "sessions not exist"
-                      });
+                      // login
+                      const password =
+                        typeof profile.id === "number"
+                          ? profile.id.toString()
+                          : profile.id;
+                      return parseRest
+                        .put(
+                          "/users/" + user.objectId,
+                          { password },
+                          { useMasterKey: true }
+                        )
+                        .then(() => {
+                          return parseRest
+                            .get("/login", {
+                              username: profile.email,
+                              password
+                            })
+                            .then(result => {
+                              // reload
+                              parseRest
+                                .get("/users/me", null, {
+                                  "X-Parse-Session-Token": result.sessionToken
+                                })
+                                .then(_user => {
+                                  // end
+                                  return this.userHandler(req, {
+                                    ..._user,
+                                    sessionToken: result.sessionToken
+                                  }).then(handledUser => res.json(handledUser));
+                                }, errorFn);
+                            }, errorFn);
+                        }, errorFn);
                     }, errorFn);
                 }, errorFn);
             } else {
@@ -581,15 +644,18 @@ export default class SocialOAuth2 {
               parseRest
                 .post("/users", user, { useMasterKey: true })
                 .then(result => {
-                  if (typeof req.session === "object")
-                    req.session.sessionToken = result.sessionToken;
                   // reload
-                  parseRest.get("/users/me").then(_user => {
-                    // end
-                    return this.userHandler(req, _user).then(handledUser =>
-                      res.json(handledUser)
-                    );
-                  }, errorFn);
+                  parseRest
+                    .get("/users/me", null, {
+                      "X-Parse-Session-Token": result.sessionToken
+                    })
+                    .then(_user => {
+                      // end
+                      return this.userHandler(req, {
+                        ..._user,
+                        sessionToken: result.sessionToken
+                      }).then(handledUser => res.json(handledUser));
+                    }, errorFn);
                 }, errorFn);
             }
           }, errorFn);
@@ -682,7 +748,8 @@ export default class SocialOAuth2 {
           }
         };
 
-        if (!profile.username) return errorFn({ code: 101, error: "Email is unknown" });
+        if (!profile.username)
+          return errorFn({ code: 101, error: "Email is unknown" });
 
         const parseRest = new ParseRest(req);
         parseRest
@@ -726,13 +793,42 @@ export default class SocialOAuth2 {
                         // end
                         return this.userHandler(req, {
                           ...user,
-                          ..._param
+                          ..._param,
+                          sessionToken: _session.sessionToken
                         }).then(handledUser => res.json(handledUser));
                       }
-                      return errorFn({
-                        code: 101,
-                        error: "sessions not exist"
-                      });
+                      // login
+                      const password =
+                        typeof profile.id === "number"
+                          ? profile.id.toString()
+                          : profile.id;
+                      return parseRest
+                        .put(
+                          "/users/" + user.objectId,
+                          { password },
+                          { useMasterKey: true }
+                        )
+                        .then(() => {
+                          return parseRest
+                            .get("/login", {
+                              username: profile.username,
+                              password
+                            })
+                            .then(result => {
+                              // reload
+                              parseRest
+                                .get("/users/me", null, {
+                                  "X-Parse-Session-Token": result.sessionToken
+                                })
+                                .then(_user => {
+                                  // end
+                                  return this.userHandler(req, {
+                                    ..._user,
+                                    sessionToken: result.sessionToken
+                                  }).then(handledUser => res.json(handledUser));
+                                }, errorFn);
+                            }, errorFn);
+                        }, errorFn);
                     }, errorFn);
                 }, errorFn);
             } else {
@@ -753,15 +849,18 @@ export default class SocialOAuth2 {
               parseRest
                 .post("/users", user, { useMasterKey: true })
                 .then(result => {
-                  if (typeof req.session === "object")
-                    req.session.sessionToken = result.sessionToken;
                   // reload
-                  parseRest.get("/users/me").then(_user => {
-                    // end
-                    return this.userHandler(req, _user).then(handledUser =>
-                      res.json(handledUser)
-                    );
-                  }, errorFn);
+                  parseRest
+                    .get("/users/me", null, {
+                      "X-Parse-Session-Token": result.sessionToken
+                    })
+                    .then(_user => {
+                      // end
+                      return this.userHandler(req, {
+                        ..._user,
+                        sessionToken: result.sessionToken
+                      }).then(handledUser => res.json(handledUser));
+                    }, errorFn);
                 }, errorFn);
             }
           }, errorFn);
@@ -859,13 +958,44 @@ export default class SocialOAuth2 {
                           // end
                           return this.userHandler(req, {
                             ...user,
-                            ..._param
+                            ..._param,
+                            sessionToken: _session.sessionToken
                           }).then(handledUser => res.json(handledUser));
                         }
-                        return errorFn({
-                          code: 101,
-                          error: "sessions not exist"
-                        });
+                        // login
+                        const password =
+                          typeof profile.id === "number"
+                            ? profile.id.toString()
+                            : profile.id;
+                        return parseRest
+                          .put(
+                            "/users/" + user.objectId,
+                            { password },
+                            { useMasterKey: true }
+                          )
+                          .then(() => {
+                            return parseRest
+                              .get("/login", {
+                                username,
+                                password
+                              })
+                              .then(result => {
+                                // reload
+                                parseRest
+                                  .get("/users/me", null, {
+                                    "X-Parse-Session-Token": result.sessionToken
+                                  })
+                                  .then(_user => {
+                                    // end
+                                    return this.userHandler(req, {
+                                      ..._user,
+                                      sessionToken: result.sessionToken
+                                    }).then(handledUser =>
+                                      res.json(handledUser)
+                                    );
+                                  }, errorFn);
+                              }, errorFn);
+                          }, errorFn);
                       }, errorFn);
                   }, errorFn);
               }
@@ -1022,7 +1152,8 @@ export default class SocialOAuth2 {
         }
       };
 
-      if (!profile.email) return errorFn({ code: 101, error: "Email is unknown" });
+      if (!profile.email)
+        return errorFn({ code: 101, error: "Email is unknown" });
 
       const parseRest = new ParseRest(req);
       parseRest
@@ -1066,10 +1197,42 @@ export default class SocialOAuth2 {
                       // end
                       return this.userHandler(req, {
                         ...user,
-                        ..._param
+                        ..._param,
+                        sessionToken: _session.sessionToken
                       }).then(handledUser => res.json(handledUser));
                     }
-                    return errorFn({ code: 101, error: "sessions not exist" });
+                    // login
+                    const password =
+                      typeof profile.id === "number"
+                        ? profile.id.toString()
+                        : profile.id;
+                    return parseRest
+                      .put(
+                        "/users/" + user.objectId,
+                        { password },
+                        { useMasterKey: true }
+                      )
+                      .then(() => {
+                        return parseRest
+                          .get("/login", {
+                            username: profile.email,
+                            password
+                          })
+                          .then(result => {
+                            // reload
+                            parseRest
+                              .get("/users/me", null, {
+                                "X-Parse-Session-Token": result.sessionToken
+                              })
+                              .then(_user => {
+                                // end
+                                return this.userHandler(req, {
+                                  ..._user,
+                                  sessionToken: result.sessionToken
+                                }).then(handledUser => res.json(handledUser));
+                              }, errorFn);
+                          }, errorFn);
+                      }, errorFn);
                   }, errorFn);
               }, errorFn);
           } else {
@@ -1090,15 +1253,18 @@ export default class SocialOAuth2 {
             parseRest
               .post("/users", user, { useMasterKey: true })
               .then(result => {
-                if (typeof req.session === "object")
-                  req.session.sessionToken = result.sessionToken;
                 // reload
-                parseRest.get("/users/me").then(_user => {
-                  // end
-                  return this.userHandler(req, _user).then(handledUser =>
-                    res.json(handledUser)
-                  );
-                }, errorFn);
+                parseRest
+                  .get("/users/me", null, {
+                    "X-Parse-Session-Token": result.sessionToken
+                  })
+                  .then(_user => {
+                    // end
+                    return this.userHandler(req, {
+                      ..._user,
+                      sessionToken: result.sessionToken
+                    }).then(handledUser => res.json(handledUser));
+                  }, errorFn);
               }, errorFn);
           }
         }, errorFn);
@@ -1191,8 +1357,11 @@ export default class SocialOAuth2 {
           }
         };
 
-        if (!profile.userid) return errorFn({ code: 101, error: "Email is unknown" });
+        if (!profile.userid)
+          return errorFn({ code: 101, error: "Email is unknown" });
 
+        if (req.headers) req.headers.sessionToken = null;
+        if (req.session) req.session.sessionToken = null;
         const parseRest = new ParseRest(req);
         parseRest
           .get(
@@ -1235,13 +1404,42 @@ export default class SocialOAuth2 {
                         // end
                         return this.userHandler(req, {
                           ...user,
-                          ..._param
+                          ..._param,
+                          sessionToken: _session.sessionToken
                         }).then(handledUser => res.json(handledUser));
                       }
-                      return errorFn({
-                        code: 101,
-                        error: "sessions not exist"
-                      });
+                      // login
+                      const password =
+                        typeof profile.id === "number"
+                          ? profile.id.toString()
+                          : profile.id;
+                      return parseRest
+                        .put(
+                          "/users/" + user.objectId,
+                          { password },
+                          { useMasterKey: true }
+                        )
+                        .then(() => {
+                          return parseRest
+                            .get("/login", {
+                              username: profile.userid,
+                              password
+                            })
+                            .then(result => {
+                              // reload
+                              parseRest
+                                .get("/users/me", null, {
+                                  "X-Parse-Session-Token": result.sessionToken
+                                })
+                                .then(_user => {
+                                  // end
+                                  return this.userHandler(req, {
+                                    ..._user,
+                                    sessionToken: result.sessionToken
+                                  }).then(handledUser => res.json(handledUser));
+                                }, errorFn);
+                            }, errorFn);
+                        }, errorFn);
                     }, errorFn);
                 }, errorFn);
             } else {
@@ -1262,15 +1460,18 @@ export default class SocialOAuth2 {
               parseRest
                 .post("/users", user, { useMasterKey: true })
                 .then(result => {
-                  if (typeof req.session === "object")
-                    req.session.sessionToken = result.sessionToken;
                   // reload
-                  parseRest.get("/users/me").then(_user => {
-                    // end
-                    return this.userHandler(req, _user).then(handledUser =>
-                      res.json(handledUser)
-                    );
-                  }, errorFn);
+                  parseRest
+                    .get("/users/me", null, {
+                      "X-Parse-Session-Token": result.sessionToken
+                    })
+                    .then(_user => {
+                      // end
+                      return this.userHandler(req, {
+                        ..._user,
+                        sessionToken: result.sessionToken
+                      }).then(handledUser => res.json(handledUser));
+                    }, errorFn);
                 }, errorFn);
             }
           }, errorFn);
@@ -1364,8 +1565,11 @@ export default class SocialOAuth2 {
         }
       };
 
-      if (!profile.kaccount_email && !profile.id) return errorFn({ code: 101, error: "Email is unknown" });
+      if (!profile.kaccount_email && !profile.id)
+        return errorFn({ code: 101, error: "Email is unknown" });
 
+      if (req.headers) req.headers.sessionToken = null;
+      if (req.session) req.session.sessionToken = null;
       const parseRest = new ParseRest(req);
       parseRest
         .get(
@@ -1408,10 +1612,42 @@ export default class SocialOAuth2 {
                       // end
                       return this.userHandler(req, {
                         ...user,
-                        ..._param
+                        ..._param,
+                        sessionToken: _session.sessionToken
                       }).then(handledUser => res.json(handledUser));
                     }
-                    return errorFn({ code: 101, error: "sessions not exist" });
+                    // login
+                    const password =
+                      typeof profile.id === "number"
+                        ? profile.id.toString()
+                        : profile.id;
+                    return parseRest
+                      .put(
+                        "/users/" + user.objectId,
+                        { password },
+                        { useMasterKey: true }
+                      )
+                      .then(() => {
+                        return parseRest
+                          .get("/login", {
+                            username: profile.kaccount_email || profile.id,
+                            password
+                          })
+                          .then(result => {
+                            // reload
+                            parseRest
+                              .get("/users/me", null, {
+                                "X-Parse-Session-Token": result.sessionToken
+                              })
+                              .then(_user => {
+                                // end
+                                return this.userHandler(req, {
+                                  ..._user,
+                                  sessionToken: result.sessionToken
+                                }).then(handledUser => res.json(handledUser));
+                              }, errorFn);
+                          }, errorFn);
+                      }, errorFn);
                   }, errorFn);
               }, errorFn);
           } else {
@@ -1432,15 +1668,18 @@ export default class SocialOAuth2 {
             parseRest
               .post("/users", user, { useMasterKey: true })
               .then(result => {
-                if (typeof req.session === "object")
-                  req.session.sessionToken = result.sessionToken;
                 // reload
-                parseRest.get("/users/me").then(_user => {
-                  // end
-                  return this.userHandler(req, _user).then(handledUser =>
-                    res.json(handledUser)
-                  );
-                }, errorFn);
+                parseRest
+                  .get("/users/me", null, {
+                    "X-Parse-Session-Token": result.sessionToken
+                  })
+                  .then(_user => {
+                    // end
+                    return this.userHandler(req, {
+                      ..._user,
+                      sessionToken: result.sessionToken
+                    }).then(handledUser => res.json(handledUser));
+                  }, errorFn);
               }, errorFn);
           }
         }, errorFn);
