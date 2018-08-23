@@ -2,9 +2,9 @@ import request from 'request';
 import qs from 'querystring';
 
 const methods = ['get', 'post', 'put', 'patch', 'del'];
+const DEFAULT_TIMEOUT = 15000;
 
 function makeHeaders(headers, req) {
-  // const DEFAULT_TIMEOUT = 8000;
   const _header = {
     'X-Parse-Application-Id': process.env.APP_ID || 'myAppId',
     'Content-Type': 'application/json'
@@ -81,7 +81,7 @@ function restCall(method, url, data, _headers, formData) {
   const requestUrl = url.indexOf('://') > -1 ? url : process.env.SERVER_URL + url;
 
   const requestParams = {
-    // timeout: DEFAULT_TIMEOUT,
+    timeout: DEFAULT_TIMEOUT,
     headers: _headers,
     url: requestUrl
   };
