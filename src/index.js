@@ -140,7 +140,11 @@ function makeRedirectUri(req, uri) {
 
   // redirect_uri
   const redirectUri =
-    (req.secure ? "https" : "http") + "://" + path.join(_host, uri);
+    (req.headers["x-forwarded-proto"] === "https" || req.secure
+      ? "https"
+      : "http") +
+    "://" +
+    path.join(_host, uri);
   return redirectUri;
 }
 
